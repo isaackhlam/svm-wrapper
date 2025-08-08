@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
-import pandas as pd
 
+import pandas as pd
 from colorlog import ColoredFormatter
 
 
