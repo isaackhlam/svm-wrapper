@@ -5,10 +5,7 @@ from enum import Enum
 from typing import Optional, Union
 
 import typer
-from click import Option
-from numpy import isin
 from sklearn import svm
-from sklearn.utils import class_weight
 
 from .utils import load_data
 
@@ -213,10 +210,10 @@ def build_config(
     elif svm_type == SVMType.Linear:
         config.max_iter = 1000
     if random_state is not None:
-        if config.probability == False and svm_type != SVMType.Linear:
+        if config.probability is False and svm_type != SVMType.Linear:
             logger.warning("random state specified but probability is False.")
             logger.warning("To make use of random state, enable probability.")
-        elif config.dual == False and svm_type == SVMType.Linear:
+        elif config.dual is False and svm_type == SVMType.Linear:
             logger.warning("random state specified but dual is False.")
             logger.warning("To make use of random state, enable dual.")
         else:
@@ -373,7 +370,7 @@ def classification(
             max_iter=config.max_iter,
         )
     else:
-        logger.error(f"Unknown SVM Type, Supported types: {SVMTYPE}")
+        logger.error(f"Unknown SVM Type, Supported types: {SVMType}")
         raise Exception("Unknown SVM Type")
 
     train_X, train_y = load_data(train_data_path, label_name)
