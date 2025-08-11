@@ -2,6 +2,7 @@ import sys
 
 import typer
 from src.model import model_app
+from src.utils import setup_logger
 
 app = typer.Typer()
 app.add_typer(model_app, name="model")
@@ -21,4 +22,5 @@ def goodbye(name: str, formal: bool = False):
 
 
 if __name__ == "__main__":
+    logger = setup_logger("app.log")
     app()
