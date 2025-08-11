@@ -300,11 +300,56 @@ def classification(
             random_state=random_state)
 
     if svm_type == SVMType.C:
-        model = svm.SVC()
+        model = svm.SVC(
+            C=config.C,
+            kernel=config.kernel,
+            degree=config.degree,
+            gamma=config.gamma,
+            coef0=config.coef0,
+            shrinking=config.shrinking,
+            probability=config.probability,
+            tol=config.tol,
+            cache_size=config.cache_size,
+            class_weight=config.class_weight,
+            verbose=config.verbose,
+            max_iter=config.max_iter,
+            decision_function_shape=config.decision_function_shape,
+            break_ties=config.break_ties,
+            random_state=config.random_state
+        )
     elif svm_type == SVMType.Nu:
-        model = svm.NuSVC()
+        model = svm.NuSVC(
+            nu=config.nu,
+            kernel=config.kernel,
+            degree=config.degree,
+            gamma=config.gamma,
+            coef0=config.coef0,
+            shrinking=config.shrinking,
+            probability=config.probability,
+            tol=config.tol,
+            cache_size=config.cache_size,
+            class_weight=config.class_weight,
+            verbose=config.verbose,
+            max_iter=config.max_iter,
+            decision_function_shape=config.decision_function_shape,
+            break_ties=config.break_ties,
+            random_state=config.random_state
+        )
     elif svm_type == SVMType.Linear:
-        model = svm.LinearSVC()
+        model = svm.LinearSVC(
+            penalty=config.penalty,
+            loss=config.loss,
+            dual=config.dual,
+            tol=config.tol,
+            C=config.C,
+            multi_class=config.multi_class,
+            fit_intercept=config.fit_intercept,
+            intercept_scaling=config.intercept_scaling,
+            class_weight=config.class_weight,
+            verbose=config.verbose,
+            random_state=config.random_state,
+            max_iter=config.max_iter
+        )
     else:
         logger.error(f"Unknown SVM Type, Supported types: {SVMTYPE}")
         raise Exception("Unknown SVM Type")
