@@ -1,6 +1,8 @@
-import subprocess
-import yaml
 import os
+import subprocess
+
+import yaml
+
 
 def export_combined_environment(output_file="merged_environment.yml"):
     # Step 1: Get conda env export
@@ -47,6 +49,6 @@ def export_combined_environment(output_file="merged_environment.yml"):
 
     print("[✔] Done!")
 
-if __name__ == "__main__":
-    export_combined_environment('environment.yml')
 
+if __name__ == "__main__":
+    export_combined_environment("environment.yml")

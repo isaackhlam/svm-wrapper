@@ -1,16 +1,16 @@
-from enum import Enum
-from typing import Optional, Union
-from dataclasses import dataclass
-
-from click import Option
-from numpy import isin
-from sklearn.utils import class_weight
-import typer
-from sklearn import svm
-
-from .utils import load_data
 import ast
 import logging
+from dataclasses import dataclass
+from enum import Enum
+from typing import Optional, Union
+
+import typer
+from click import Option
+from numpy import isin
+from sklearn import svm
+from sklearn.utils import class_weight
+
+from .utils import load_data
 
 model_app = typer.Typer()
 logger = logging.getLogger(__name__)
@@ -21,6 +21,7 @@ class SVMType(str, Enum):
     Nu = "Nu"
     Linear = "Linear"
 
+
 class Kernel(str, Enum):
     linear = "linear"
     poly = "poly"
@@ -28,21 +29,26 @@ class Kernel(str, Enum):
     sigmoid = "sigmoid"
     precomputed = "precomputed"
 
+
 class DecisionFunctionShape(str, Enum):
     ovo = "ovo"
     ovr = "ovr"
 
+
 class Penalty(str, Enum):
-    l1 = 'l1'
-    l2 = 'l2'
+    l1 = "l1"
+    l2 = "l2"
+
 
 class Loss(str, Enum):
-    hinge = 'hinge'
-    squared_hinge = 'squared_hinge'
+    hinge = "hinge"
+    squared_hinge = "squared_hinge"
+
 
 class MultiClass(str, Enum):
-    ovr = 'ovr'
-    crammer_singer = 'crammer_singer'
+    ovr = "ovr"
+    crammer_singer = "crammer_singer"
+
 
 @dataclass
 class Config:
@@ -50,7 +56,7 @@ class Config:
     nu: float = 0.5
     penalty: Penalty = Penalty.l2
     loss: Loss = Loss.squared_hinge
-    dual: Union[str, bool] = 'auto'
+    dual: Union[str, bool] = "auto"
     multi_class: MultiClass = MultiClass.ovr
     fit_intercept: bool = True
     intercept_scalling: float = 1.0
@@ -68,6 +74,7 @@ class Config:
     decision_function_shape: DecisionFunctionShape = DecisionFunctionShape.ovr
     break_ties: bool = False
     random_state: Optional[int] = None
+
 
 def build_config(
     svm_type: SVMType,
@@ -92,7 +99,7 @@ def build_config(
     max_iter: Optional[int],
     decision_function_shape: Optional[DecisionFunctionShape],
     break_ties: Optional[bool],
-    random_state: Optional[int]
+    random_state: Optional[int],
 ) -> Config:
     config = Config
 
@@ -118,8 +125,8 @@ def build_config(
             config.penalty = penalty
         if loss is not None:
             config.loss = loss
-        if dual is not  None:
-            if dual == 'auto' or isinstance(dual, bool):
+        if dual is not None:
+            if dual == "auto" or isinstance(dual, bool):
                 config.dual = dual
             else:
                 logger.error(f"dual must be auto, True or False. Input Value: {dual}")
@@ -135,8 +142,12 @@ def build_config(
             config.kernel = kernel
         if degree is not None:
             if kernel != Kernel.poly:
-                logger.warning(f"degree parameter specified but kernel is not polynomial. Ingoring degree value specified.")
-                logger.warning(f"degree only significant for poly kernel type, current kernel type: {config.kernel}.")
+                logger.warning(
+                    f"degree parameter specified but kernel is not polynomial. Ingoring degree value specified."
+                )
+                logger.warning(
+                    f"degree only significant for poly kernel type, current kernel type: {config.kernel}."
+                )
             elif degree < 0:
                 logger.error(f"Degree must be non-negative, Input Value: {degree}")
                 raise ValueError("Negative degree")
@@ -146,7 +157,9 @@ def build_config(
             if gamma == "scale" or gamma == "auto":
                 pass
             elif not isinstance(gamma, float):
-                logger.error(f"Unknown gamma, must be 'scale', 'auto' or floating number. Input Value: {gamma}")
+                logger.error(
+                    f"Unknown gamma, must be 'scale', 'auto' or floating number. Input Value: {gamma}"
+                )
                 raise ValueError("Unsupported gamma value")
             elif gamma < 0:
                 logger.error(f"gamma must be non-negative, Input Value: {gamma}")
@@ -154,8 +167,12 @@ def build_config(
             config.gamma = gamma
         if coef0 is not None:
             if kernel != Kernel.poly and kernel != Kernel.sigmoid:
-                logger.warning("coef0 specified but kernel is neither polynomial nor sigmoid.")
-                logger.warning("Ignoring coef0, it is only significant for polynomial or sigmoid kernel")
+                logger.warning(
+                    "coef0 specified but kernel is neither polynomial nor sigmoid."
+                )
+                logger.warning(
+                    "Ignoring coef0, it is only significant for polynomial or sigmoid kernel"
+                )
             else:
                 config.coef0 = coef0
         if shrinking is not None:
@@ -179,10 +196,14 @@ def build_config(
             config.class_weight = class_weight
     if verbose is not None:
         if svm_type == SVMType.Linear and not isinstance(verbose, int):
-            logger.error(f"verbose must be integer for LinearSVC. Input Value: {verbose}")
+            logger.error(
+                f"verbose must be integer for LinearSVC. Input Value: {verbose}"
+            )
             raise ValueError("Non integer verbose")
         if svm_type != SVMType.Linear and not isinstance(verbose, bool):
-            logger.error(f"verbose must be bool for SVC or NuSVC. Input Value: {verbose}")
+            logger.error(
+                f"verbose must be bool for SVC or NuSVC. Input Value: {verbose}"
+            )
             raise ValueError("None bool verbose")
         config.verbose = verbose
     else:
@@ -203,11 +224,12 @@ def build_config(
 
     return config
 
+
 def coerce_value(field_type, value):
     """Coerce CLI input (string) into correct type."""
     if value is None:
         return None
-    origin_type = getattr(field_type, '__origin__', None)
+    origin_type = getattr(field_type, "__origin__", None)
 
     # Handle Optional or Union
     if origin_type is Union:
@@ -236,7 +258,6 @@ def coerce_value(field_type, value):
 
     # Default: cast to field_type
     return field_type(value)
-
 
 
 @model_app.command()
@@ -269,35 +290,36 @@ def classification(
     random_state: Optional[int] = None,
 ):
 
-    dual = coerce_value(Config.__annotations__['dual'], dual)
-    gamma = coerce_value(Config.__annotations__['gamma'], gamma)
-    class_weight = coerce_value(Config.__annotations__['class_weight'], class_weight)
-    verbose = coerce_value(Config.__annotations__['verbose'], verbose)
+    dual = coerce_value(Config.__annotations__["dual"], dual)
+    gamma = coerce_value(Config.__annotations__["gamma"], gamma)
+    class_weight = coerce_value(Config.__annotations__["class_weight"], class_weight)
+    verbose = coerce_value(Config.__annotations__["verbose"], verbose)
 
     config = build_config(
-            svm_type=svm_type,
-            C=C,
-            nu=nu,
-            penalty=penalty,
-            loss=loss,
-            dual=dual,
-            multi_class=multi_class,
-            fit_intercept=fit_intercept,
-            intercept_scalling=intercept_scalling,
-            kernel=kernel,
-            degree=degree,
-            gamma=gamma,
-            coef0=coef0,
-            shrinking=shrinking,
-            probability=probability,
-            tol=tol,
-            cache_size=cache_size,
-            class_weight=class_weight,
-            verbose=verbose,
-            max_iter=max_iter,
-            decision_function_shape=decision_function_shape,
-            break_ties=break_ties,
-            random_state=random_state)
+        svm_type=svm_type,
+        C=C,
+        nu=nu,
+        penalty=penalty,
+        loss=loss,
+        dual=dual,
+        multi_class=multi_class,
+        fit_intercept=fit_intercept,
+        intercept_scalling=intercept_scalling,
+        kernel=kernel,
+        degree=degree,
+        gamma=gamma,
+        coef0=coef0,
+        shrinking=shrinking,
+        probability=probability,
+        tol=tol,
+        cache_size=cache_size,
+        class_weight=class_weight,
+        verbose=verbose,
+        max_iter=max_iter,
+        decision_function_shape=decision_function_shape,
+        break_ties=break_ties,
+        random_state=random_state,
+    )
 
     if svm_type == SVMType.C:
         model = svm.SVC(
@@ -315,7 +337,7 @@ def classification(
             max_iter=config.max_iter,
             decision_function_shape=config.decision_function_shape,
             break_ties=config.break_ties,
-            random_state=config.random_state
+            random_state=config.random_state,
         )
     elif svm_type == SVMType.Nu:
         model = svm.NuSVC(
@@ -333,7 +355,7 @@ def classification(
             max_iter=config.max_iter,
             decision_function_shape=config.decision_function_shape,
             break_ties=config.break_ties,
-            random_state=config.random_state
+            random_state=config.random_state,
         )
     elif svm_type == SVMType.Linear:
         model = svm.LinearSVC(
@@ -348,7 +370,7 @@ def classification(
             class_weight=config.class_weight,
             verbose=config.verbose,
             random_state=config.random_state,
-            max_iter=config.max_iter
+            max_iter=config.max_iter,
         )
     else:
         logger.error(f"Unknown SVM Type, Supported types: {SVMTYPE}")
