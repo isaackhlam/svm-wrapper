@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, Union
 
+from numpy.__config__ import show
 import typer
 from sklearn import svm
 
@@ -11,7 +12,7 @@ from .utils import load_data
 
 model_app = typer.Typer()
 logger = logging.getLogger(__name__)
-
+UNSET = object()
 
 class SVMType(str, Enum):
     C = "C"
@@ -257,6 +258,7 @@ def coerce_value(field_type, value):
     return field_type(value)
 
 
+# typer.option default set to None, Actual default value already set when initialize Config object.
 @model_app.command()
 def classification(
     svm_type: SVMType = "C",
@@ -265,28 +267,28 @@ def classification(
     output_result_path: str = "example/data/classification_output.csv",
     preview_prediction_result: bool = False,
     label_name: str = "label",
-    C: Optional[float] = None,
-    nu: Optional[float] = None,
-    penalty: Optional[Penalty] = None,
-    loss: Optional[Loss] = None,
-    dual: Optional[str] = None,
-    multi_class: Optional[MultiClass] = None,
-    fit_intercept: Optional[bool] = None,
-    intercept_scalling: Optional[float] = None,
-    kernel: Optional[Kernel] = None,
-    degree: Optional[int] = None,
-    gamma: Optional[str] = None,
-    coef0: Optional[float] = None,
-    shrinking: Optional[bool] = None,
-    probability: Optional[bool] = None,
-    tol: Optional[float] = None,
-    cache_size: Optional[float] = None,
-    class_weight: Optional[str] = None,
-    verbose: Optional[str] = None,
-    max_iter: Optional[int] = None,
-    decision_function_shape: Optional[DecisionFunctionShape] = None,
-    break_ties: Optional[bool] = None,
-    random_state: Optional[int] = None,
+    C: Optional[float] = typer.Option(None, help="Regularization parameter. The strength of the regularization is inversely proportional to C. Must be strictly positive. Default: 1.0", show_default=False),
+    nu: Optional[float] = typer.Option(None, help="Upper bound on the fraction of margin errors and a lower bound of the fraction of support vectors. Must be in (0, 1]. Default: 0.5", show_default=False),
+    penalty: Optional[Penalty] = typer.Option(Penalty.l2, help="Norm used in the penalization. Default: l2", show_default=False),
+    loss: Optional[Loss] = typer.Option(Loss.squared_hinge, help="Loss function. Default: squared_hinge", show_default=False),
+    dual: Optional[str] = typer.Option(None, help="Select the algorithm to either solve the dual or primal optimization problem. Avaiable option: true, false, auto. Default: auto", show_default=False),
+    multi_class: Optional[MultiClass] = typer.Option(None, help="Determines the multi-class strategy if y contains ore than two classes. Default: 'ovr'", show_default=False),
+    fit_intercept: Optional[bool] = typer.Option(None, help="Whether or not to fit an intercept. Default: True", show_default=False),
+    intercept_scalling: Optional[float] = typer.Option(None, help="Allow intercept term to have a different regularization behavior compared to the other features, Default: 1.0", show_default=False),
+    kernel: Optional[Kernel] = typer.Option(Kernel.rbf, help="Kernal Type. Default: rbf", show_default=False),
+    degree: Optional[int] = typer.Option(None, help="Degree of the polynomial kernel function. Default: 3", show_default=False),
+    gamma: Optional[str] = typer.Option(None, help="Kernel coefficient for 'rbf', 'poly' and sigmoid'. Default: 'scale'", show_default=False),
+    coef0: Optional[float] = typer.Option(None, help="Independent term in kernel function. Default: 0.0", show_default=False),
+    shrinking: Optional[bool] = typer.Option(None, help="Whether to use the shrinking heuristic, Default: True", show_default=False),
+    probability: Optional[bool] = typer.Option(None, help="Whether to enable probability estimates. Default: False", show_default=False),
+    tol: Optional[float] = typer.Option(None, help="Tolerance for stopping criterion. Default: [Linear] 1e-4, [C|Nu] 1e-3", show_default=False),
+    cache_size: Optional[float] = typer.Option(None, help="Size of the kernel cache (in MB). Default: 200", show_default=False),
+    class_weight: Optional[str] = typer.Option(None, help="Parameter of [C|Nu|Linear] of class i to class_weight[i] * [C|Nu|Linear]. Default: All weight are one", show_default=False),
+    verbose: Optional[str] = typer.Option(None, help="Enable verbose output. Default: False", show_default=False),
+    max_iter: Optional[int] = typer.Option(None, help="Hard limit on iterations within solver, or -1 for no limit. Default: [C|Nu] -1, [Linear]: 1000", show_default=False),
+    decision_function_shape: Optional[DecisionFunctionShape] = typer.Option(DecisionFunctionShape.ovr, help="Whether to return a one-vs-rest (ovr) or one-vs-one (ovo) decision function. Default: ovr", show_default=False),
+    break_ties: Optional[bool] = typer.Option(None, help="Whether predict will break ties according to the confidence values of decision_function. Default=False", show_default=False),
+    random_state: Optional[int] = typer.Option(None, help="Controls the pseudo random number generation. Default=None", show_default=None),
 ):
 
     dual = coerce_value(Config.__annotations__["dual"], dual)
