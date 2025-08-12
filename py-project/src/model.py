@@ -262,6 +262,8 @@ def classification(
     svm_type: SVMType = "C",
     train_data_path: str = "example/data/classification_train.csv",
     test_data_path: str = "example/data/classification_test.csv",
+    output_result_path: str = "example/data/classification_output.csv",
+    preview_prediction_result: bool = False,
     label_name: str = "label",
     C: Optional[float] = None,
     nu: Optional[float] = None,
@@ -373,9 +375,21 @@ def classification(
         logger.error(f"Unknown SVM Type, Supported types: {SVMType}")
         raise Exception("Unknown SVM Type")
 
+    logger.info("Loading training data.")
     train_X, train_y = load_data(train_data_path, label_name)
+    logger.info("Training model.")
     model.fit(train_X, train_y)
+    logger.info("Finished model training.")
 
+    logger.info("Loading testing data.")
     test_X = load_data(test_data_path)
-    test_pred = model.predict(test_X)
-    print(test_pred)
+    test_X = test_X[train_X.columns]
+    logger.info("Predicting test data")
+    predictions = model.predict(test_X)
+    test_pred = test_X.copy()
+    test_pred["prediction"] = predictions
+    test_pred.to_csv(output_result_path, index=False)
+    logger.info(f"Prediction Finished, result saved to {output_result_path}")
+
+    if preview_prediction_result is True:
+        print(test_pred)

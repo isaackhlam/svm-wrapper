@@ -5,7 +5,7 @@ from src.model import model_app
 from src.utils import setup_logger
 
 app = typer.Typer()
-app.add_typer(model_app, name="model")
+app.add_typer(model_app, name="svm")
 
 
 @app.command()
