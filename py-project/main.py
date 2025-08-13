@@ -1,8 +1,8 @@
 import sys
 
 import typer
-from src.svm import svm_app
 from src.dnn import dnn_app
+from src.svm import svm_app
 from src.utils import setup_logger
 
 app = typer.Typer()
