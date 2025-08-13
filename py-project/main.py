@@ -1,11 +1,13 @@
 import sys
 
 import typer
-from src.model import model_app
+from src.dnn import dnn_app
+from src.svm import svm_app
 from src.utils import setup_logger
 
 app = typer.Typer()
-app.add_typer(model_app, name="svm")
+app.add_typer(svm_app, name="svm")
+app.add_typer(dnn_app, name="dnn")
 
 
 @app.command()
