@@ -2,7 +2,7 @@ import ast
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Union
+from typing import Optional, Union, get_origin, get_args
 
 import typer
 from sklearn import svm
@@ -266,6 +266,27 @@ def coerce_value(field_type, value):
     # Handle dict
     if field_type is dict or field_type == dict:
         return ast.literal_eval(value)
+
+    # Handle tuple
+    if origin_type is tuple or field_type is tuple:
+        try:
+            parsed = ast.literal_eval(value)
+            if not isinstance(parsed, tuple):
+                raise ValueError(f"Expected tuple, got {type(parsed)}")
+
+            # If specific tuple element types are specified, coerce each
+            args = get_args(field_type)
+            if args:
+                if len(args) == 2 and args[1] is Ellipsis:
+                    # Tuple[int, ...]
+                    return tuple(coerce_value(args[0], v) for v in parsed)
+                elif len(args) == len(parsed):
+                    return tuple(coerce_value(t, v) for t, v in zip(args, parsed))
+                else:
+                    raise typer.BadParameter(f"Expected {len(args)} elements, got {len(parsed)}")
+            return parsed
+        except Exception as e:
+            raise typer.BadParameter(f"Invalid tuple input: {value!r}. Error: {e}")
 
     # Default: cast to field_type
     return field_type(value)

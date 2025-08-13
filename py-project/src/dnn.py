@@ -315,6 +315,7 @@ def regression(
     ),
 ):
 
+    hidden_layer_sizes = coerce_value(Config.__annotations__["hidden_layer_sizes"], hidden_layer_sizes)
     batch_size = coerce_value(Config.__annotations__["batch_size"], batch_size)
 
     config = build_config(
