@@ -2,7 +2,7 @@ import ast
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Union, get_origin, get_args
+from typing import Optional, Union, get_args, get_origin
 
 import typer
 from sklearn import svm
@@ -283,7 +283,9 @@ def coerce_value(field_type, value):
                 elif len(args) == len(parsed):
                     return tuple(coerce_value(t, v) for t, v in zip(args, parsed))
                 else:
-                    raise typer.BadParameter(f"Expected {len(args)} elements, got {len(parsed)}")
+                    raise typer.BadParameter(
+                        f"Expected {len(args)} elements, got {len(parsed)}"
+                    )
             return parsed
         except Exception as e:
             raise typer.BadParameter(f"Invalid tuple input: {value!r}. Error: {e}")
