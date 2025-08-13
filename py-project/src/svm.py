@@ -9,7 +9,7 @@ from sklearn import svm
 
 from .utils import load_data
 
-model_app = typer.Typer()
+svm_app = typer.Typer()
 logger = logging.getLogger(__name__)
 UNSET = object()
 
@@ -272,7 +272,7 @@ def coerce_value(field_type, value):
 
 
 # typer.option default set to None, Actual default value already set when initialize Config object.
-@model_app.command()
+@svm_app.command()
 def classification(
     svm_type: SVMType = "C",
     train_data_path: str = "example/data/classification_train.csv",
@@ -495,7 +495,7 @@ def classification(
 
 
 # typer.option default set to None, Actual default value already set when initialize Config object.
-@model_app.command()
+@svm_app.command()
 def regression(
     svm_type: SVMType = "C",
     train_data_path: str = "example/data/regression_train.csv",
