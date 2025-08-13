@@ -1,16 +1,17 @@
 import logging
-from typing import Optional
 from enum import Enum
-
-import pandas as pd
-from colorlog import ColoredFormatter
-import shap
-import numpy as np
-import matplotlib.pyplot as plt
 from pathlib import Path
-from sklearn import svm, neural_network
+from typing import Optional
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import shap
+from colorlog import ColoredFormatter
+from sklearn import neural_network, svm
 
 logger = logging.getLogger(__name__)
+
 
 def setup_logger(
     output_file: Optional[str] = None,
@@ -68,12 +69,12 @@ def load_data(path: str, label_column: Optional[str] = None):
 
 
 class ExplainerType(str, Enum):
-    linear = 'linear'
-    kernel = 'kernel'
+    linear = "linear"
+    kernel = "kernel"
 
 
 def save_shap_value(X_test, y_test, shap_values, save_prefix, multi_class=False):
-    save_path = Path(save_prefix) / Path('shap_explanation.csv')
+    save_path = Path(save_prefix) / Path("shap_explanation.csv")
 
     if multi_class:
         n_classes = len(shap_values)
@@ -85,34 +86,49 @@ def save_shap_value(X_test, y_test, shap_values, save_prefix, multi_class=False)
         for class_idx in range(n_classes):
             shap_df = pd.DataFrame(
                 shap_values[class_idx],
-                columns=[f'SHAP_class{class_idx}_{feature}' for feature in feature_names]
+                columns=[
+                    f"SHAP_class{class_idx}_{feature}" for feature in feature_names
+                ],
             )
             shap_dfs.append(shap_df)
 
         shap_all_classes_df = pd.concat(shap_dfs, axis=1)
 
-        result_df = pd.concat([
-            X_test.reset_index(drop=True),
-            pd.DataFrame({'Prediction': pred_y_test}).reset_index(drop=True),
-            shap_all_classes_df.reset_index(drop=True)
-        ], axis=1)
+        result_df = pd.concat(
+            [
+                X_test.reset_index(drop=True),
+                pd.DataFrame({"Prediction": pred_y_test}).reset_index(drop=True),
+                shap_all_classes_df.reset_index(drop=True),
+            ],
+            axis=1,
+        )
 
         result_df.to_csv(save_path, index=False)
     else:
-        shap_df = pd.DataFrame(shap_values, columns=[f'SHAP_{col}' for col in X_test.columns])
+        shap_df = pd.DataFrame(
+            shap_values, columns=[f"SHAP_{col}" for col in X_test.columns]
+        )
 
-        result_df = pd.concat([
-            X_test.reset_index(drop=True),
-            pd.DataFrame({'Prediction': y_test}).reset_index(drop=True),
-            shap_df.reset_index(drop=True)
-        ], axis=1)
+        result_df = pd.concat(
+            [
+                X_test.reset_index(drop=True),
+                pd.DataFrame({"Prediction": y_test}).reset_index(drop=True),
+                shap_df.reset_index(drop=True),
+            ],
+            axis=1,
+        )
 
         result_df.to_csv(save_path, index=False)
 
 
 def explain_model(model, X_train, X_test, y_train, y_test, explainer_type, save_prefix):
 
-    is_classification = isinstance(model, svm.SVC) or isinstance(model, svm.NuSVC) or isinstance(model, svm.LinearSVC) or isinstance(model, neural_network.MLPClassifier)
+    is_classification = (
+        isinstance(model, svm.SVC)
+        or isinstance(model, svm.NuSVC)
+        or isinstance(model, svm.LinearSVC)
+        or isinstance(model, neural_network.MLPClassifier)
+    )
     n_classes = pd.Series(y_train).nunique()
 
     multi_class = False
@@ -129,7 +145,9 @@ def explain_model(model, X_train, X_test, y_train, y_test, explainer_type, save_
     if explainer_type == ExplainerType.kernel:
         explainer = shap.KernelExplainer(model.predict, X_train)
     elif explainer_type == ExplainerType.linear:
-        explainer = shap.LinearExplainer(model, X_train, feature_perturbation="correlation_dependent")
+        explainer = shap.LinearExplainer(
+            model, X_train, feature_perturbation="correlation_dependent"
+        )
 
     shap_values = explainer.shap_values(X_test)
 
@@ -138,10 +156,10 @@ def explain_model(model, X_train, X_test, y_train, y_test, explainer_type, save_
 
     shap.summary_plot(shap_values, X_test)
     if save_prefix is not None:
-        plt.savefig(Path(save_prefix) / Path("summary_plot.png"), bbox_inches='tight')
+        plt.savefig(Path(save_prefix) / Path("summary_plot.png"), bbox_inches="tight")
 
-    shap.force_plot(explainer.expected_value, shap_values[0,:], X_test.iloc[0, :], matplotlib=True)
+    shap.force_plot(
+        explainer.expected_value, shap_values[0, :], X_test.iloc[0, :], matplotlib=True
+    )
     if save_prefix is not None:
-        plt.savefig(Path(save_prefix) / Path("force_plot.png"), bbox_inches='tight')
-
-
+        plt.savefig(Path(save_prefix) / Path("force_plot.png"), bbox_inches="tight")

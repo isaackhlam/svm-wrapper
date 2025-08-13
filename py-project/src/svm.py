@@ -7,7 +7,7 @@ from typing import Optional, Union, get_args, get_origin
 import typer
 from sklearn import svm
 
-from .utils import load_data, ExplainerType, explain_model
+from .utils import ExplainerType, explain_model, load_data
 
 svm_app = typer.Typer()
 logger = logging.getLogger(__name__)
@@ -301,7 +301,9 @@ def classification(
     train_data_path: str = "example/data/classification_train.csv",
     test_data_path: str = "example/data/classification_test.csv",
     output_result_path: str = "example/data/classification_output.csv",
-    shap_output_path: Optional[str] = typer.Option(None, help="Output folder for SHAP plot and values."),
+    shap_output_path: Optional[str] = typer.Option(
+        None, help="Output folder for SHAP plot and values."
+    ),
     preview_prediction_result: bool = False,
     label_name: str = "label",
     do_explain_model: bool = False,
@@ -519,7 +521,10 @@ def classification(
         print(test_pred)
 
     if do_explain_model is True:
-        explain_model(model, train_X, test_X, train_y, predictions, 'kernel', shap_output_path)
+        explain_model(
+            model, train_X, test_X, train_y, predictions, "kernel", shap_output_path
+        )
+
 
 # typer.option default set to None, Actual default value already set when initialize Config object.
 @svm_app.command()
@@ -528,7 +533,9 @@ def regression(
     train_data_path: str = "example/data/regression_train.csv",
     test_data_path: str = "example/data/regression_test.csv",
     output_result_path: str = "example/data/regression_output.csv",
-    shap_output_path: Optional[str] = typer.Option(None, help="Output folder for SHAP plot and values."),
+    shap_output_path: Optional[str] = typer.Option(
+        None, help="Output folder for SHAP plot and values."
+    ),
     preview_prediction_result: bool = False,
     label_name: str = "label",
     do_explain_model: bool = False,
@@ -703,4 +710,6 @@ def regression(
         print(test_pred)
 
     if do_explain_model is True:
-        explain_model(model, train_X, test_X, train_y, predictions, 'kernel', shap_output_path)
+        explain_model(
+            model, train_X, test_X, train_y, predictions, "kernel", shap_output_path
+        )
