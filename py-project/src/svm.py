@@ -526,7 +526,13 @@ def classification(
         else:
             explainer_type = "kernel"
         explain_model(
-            model, train_X, test_X, train_y, predictions, explainer_type, shap_output_path
+            model,
+            train_X,
+            test_X,
+            train_y,
+            predictions,
+            explainer_type,
+            shap_output_path,
         )
 
 
@@ -719,5 +725,11 @@ def regression(
         else:
             explainer_type = "kernel"
         explain_model(
-            model, train_X, test_X, train_y, predictions, explainer_type, shap_output_path
+            model,
+            train_X,
+            test_X,
+            train_y,
+            predictions,
+            explainer_type,
+            shap_output_path,
         )

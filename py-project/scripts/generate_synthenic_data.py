@@ -54,9 +54,11 @@ df_reg_test = pd.DataFrame(X_reg_test, columns=feature_names)
 df_reg_test["label"] = y_reg_test
 
 # --- Save CSV files ---
-df_cls_train.to_csv("classification_train.csv", index=False)
-df_cls_test.to_csv("classification_test.csv", index=False)
-df_reg_train.to_csv("regression_train.csv", index=False)
-df_reg_test.to_csv("regression_test.csv", index=False)
+float_fmt = "%.4f"
+
+df_cls_train.to_csv("classification_train.csv", index=False, float_format=float_fmt)
+df_cls_test.to_csv("classification_test.csv", index=False, float_format=float_fmt)
+df_reg_train.to_csv("regression_train.csv", index=False, float_format=float_fmt)
+df_reg_test.to_csv("regression_test.csv", index=False, float_format=float_fmt)
 
 print("✅ All 4 datasets generated and saved successfully.")
