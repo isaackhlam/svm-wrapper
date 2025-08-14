@@ -7,7 +7,7 @@ import typer
 from sklearn import neural_network
 
 from .svm import coerce_value
-from .utils import load_data
+from .utils import load_data, explain_model
 
 dnn_app = typer.Typer()
 logger = logging.getLogger(__name__)
@@ -197,8 +197,12 @@ def classification(
     train_data_path: str = "example/data/classification_train.csv",
     test_data_path: str = "example/data/classification_test.csv",
     output_result_path: str = "example/data/classification_dnn_output.csv",
+    shap_output_path: Optional[str] = typer.Option(
+        None, help="Output folder for SHAP plot and values."
+    ),
     preview_prediction_result: bool = False,
     label_name: str = "label",
+    do_explain_model: bool = False,
     hidden_layer_sizes: Optional[str] = typer.Option(
         None,
         help="The ith element represents the number of neurons in the ith hidden layer. Default: (100,)",
@@ -386,14 +390,29 @@ def classification(
     if preview_prediction_result is True:
         print(test_pred)
 
+    if do_explain_model is True:
+        explain_model(
+            model,
+            train_X,
+            test_X,
+            train_y,
+            predictions,
+            "kernel",
+            shap_output_path,
+        )
+
 
 @dnn_app.command()
 def regression(
     train_data_path: str = "example/data/regression_train.csv",
     test_data_path: str = "example/data/regression_test.csv",
     output_result_path: str = "example/data/regression_dnn_output.csv",
+    shap_output_path: Optional[str] = typer.Option(
+        None, help="Output folder for SHAP plot and values."
+    ),
     preview_prediction_result: bool = False,
     label_name: str = "label",
+    do_explain_model: bool = False,
     loss: Optional[Loss] = typer.Option(
         None,
         help="The loss function to use when training the weights. Default: squared_error",
@@ -586,3 +605,14 @@ def regression(
 
     if preview_prediction_result is True:
         print(test_pred)
+
+    if do_explain_model is True:
+        explain_model(
+            model,
+            train_X,
+            test_X,
+            train_y,
+            predictions,
+            "kernel",
+            shap_output_path,
+        )
