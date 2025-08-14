@@ -191,6 +191,120 @@ def build_config(
 
     return config
 
+def classification_logic(
+    train_data_path: str,
+    test_data_path: str,
+    output_result_path: str,
+    shap_output_path: Optional[str],
+    preview_prediction_result: bool,
+    label_name: str,
+    do_explain_model: bool,
+    hidden_layer_sizes: Optional[tuple],
+    activation: Optional[Activation],
+    solver: Optional[Solver],
+    alpha: Optional[float],
+    batch_size: Optional[Union[str, float]],
+    learning_rate: Optional[LearningRate],
+    learning_rate_init: Optional[float],
+    power_t: Optional[float],
+    max_iter: Optional[int],
+    shuffle: Optional[bool],
+    random_state: Optional[int],
+    tol: Optional[float],
+    verbose: Optional[bool],
+    warm_start: Optional[bool],
+    momentum: Optional[float],
+    nesterovs_momentum: Optional[bool],
+    early_stopping: Optional[bool],
+    validation_fraction: Optional[float],
+    beta_1: Optional[float],
+    beta_2: Optional[float],
+    epsilon: Optional[float],
+    n_iter_no_change: Optional[int],
+    max_fun: Optional[int],
+):
+    config = build_config(
+        loss=None,
+        hidden_layer_sizes=hidden_layer_sizes,
+        activation=activation,
+        solver=solver,
+        alpha=alpha,
+        batch_size=batch_size,
+        learning_rate=learning_rate,
+        learning_rate_init=learning_rate_init,
+        power_t=power_t,
+        max_iter=max_iter,
+        shuffle=shuffle,
+        random_state=random_state,
+        tol=tol,
+        verbose=verbose,
+        warm_start=warm_start,
+        momentum=momentum,
+        nesterovs_momentum=nesterovs_momentum,
+        early_stopping=early_stopping,
+        validation_fraction=validation_fraction,
+        beta_1=beta_1,
+        beta_2=beta_2,
+        epsilon=epsilon,
+        n_iter_no_change=n_iter_no_change,
+        max_fun=max_fun,
+    )
+    model = neural_network.MLPClassifier(
+        hidden_layer_sizes=config.hidden_layer_sizes,
+        activation=config.activation,
+        solver=config.solver,
+        alpha=config.alpha,
+        batch_size=config.batch_size,
+        learning_rate=config.learning_rate,
+        learning_rate_init=config.learning_rate_init,
+        power_t=config.power_t,
+        max_iter=config.max_iter,
+        shuffle=config.shuffle,
+        random_state=config.random_state,
+        tol=config.tol,
+        verbose=config.verbose,
+        warm_start=config.warm_start,
+        momentum=config.momentum,
+        nesterovs_momentum=config.nesterovs_momentum,
+        early_stopping=config.early_stopping,
+        validation_fraction=config.validation_fraction,
+        beta_1=config.beta_1,
+        beta_2=config.beta_2,
+        epsilon=config.epsilon,
+        n_iter_no_change=config.n_iter_no_change,
+        max_fun=config.max_fun,
+    )
+
+    logger.info("Loading training data.")
+    train_X, train_y = load_data(train_data_path, label_name)
+    logger.info("Training model.")
+    model.fit(train_X, train_y)
+    logger.info("Finished model training.")
+
+    logger.info("Loading testing data.")
+    test_X = load_data(test_data_path)
+    test_X = test_X[train_X.columns]
+    logger.info("Predicting test data")
+    predictions = model.predict(test_X)
+    test_pred = test_X.copy()
+    test_pred["prediction"] = predictions
+    test_pred.to_csv(output_result_path, index=False)
+    logger.info(f"Prediction Finished, result saved to {output_result_path}")
+
+    if preview_prediction_result is True:
+        print(test_pred)
+
+    if do_explain_model is True:
+        explain_model(
+            model,
+            train_X,
+            test_X,
+            train_y,
+            predictions,
+            "kernel",
+            shap_output_path,
+        )
+
 
 @dnn_app.command()
 def classification(
@@ -318,9 +432,75 @@ def classification(
         Config.__annotations__["hidden_layer_sizes"], hidden_layer_sizes
     )
     batch_size = coerce_value(Config.__annotations__["batch_size"], batch_size)
+    classification_logic(
+        train_data_path=train_data_path,
+        test_data_path=test_data_path,
+        output_result_path=output_result_path,
+        shap_output_path=shap_output_path,
+        preview_prediction_result=preview_prediction_result,
+        label_name=label_name,
+        do_explain_model=do_explain_model,
+        hidden_layer_sizes=hidden_layer_sizes,
+        activation=activation,
+        solver=solver,
+        alpha=alpha,
+        batch_size=batch_size,
+        learning_rate=learning_rate,
+        learning_rate_init=learning_rate_init,
+        power_t=power_t,
+        max_iter=max_iter,
+        shuffle=shuffle,
+        random_state=random_state,
+        tol=tol,
+        verbose=verbose,
+        warm_start=warm_start,
+        momentum=momentum,
+        nesterovs_momentum=nesterovs_momentum,
+        early_stopping=early_stopping,
+        validation_fraction=validation_fraction,
+        beta_1=beta_1,
+        beta_2=beta_2,
+        epsilon=epsilon,
+        n_iter_no_change=n_iter_no_change,
+        max_fun=max_fun
+    )
 
+
+def regression_logic(
+    train_data_path: str,
+    test_data_path: str,
+    output_result_path: str,
+    shap_output_path: Optional[str],
+    preview_prediction_result: bool,
+    label_name: str,
+    do_explain_model: bool,
+    loss: Optional[Loss],
+    hidden_layer_sizes: Optional[tuple],
+    activation: Optional[Activation],
+    solver: Optional[Solver],
+    alpha: Optional[float],
+    batch_size: Optional[Union[str, float]],
+    learning_rate: Optional[LearningRate],
+    learning_rate_init: Optional[float],
+    power_t: Optional[float],
+    max_iter: Optional[int],
+    shuffle: Optional[bool],
+    random_state: Optional[int],
+    tol: Optional[float],
+    verbose: Optional[bool],
+    warm_start: Optional[bool],
+    momentum: Optional[float],
+    nesterovs_momentum: Optional[bool],
+    early_stopping: Optional[bool],
+    validation_fraction: Optional[float],
+    beta_1: Optional[float],
+    beta_2: Optional[float],
+    epsilon: Optional[float],
+    n_iter_no_change: Optional[int],
+    max_fun: Optional[int],
+):
     config = build_config(
-        loss=None,
+        loss=loss,
         hidden_layer_sizes=hidden_layer_sizes,
         activation=activation,
         solver=solver,
@@ -345,7 +525,8 @@ def classification(
         n_iter_no_change=n_iter_no_change,
         max_fun=max_fun,
     )
-    model = neural_network.MLPClassifier(
+    model = neural_network.MLPRegressor(
+        loss=config.loss,
         hidden_layer_sizes=config.hidden_layer_sizes,
         activation=config.activation,
         solver=config.solver,
@@ -400,6 +581,7 @@ def classification(
             "kernel",
             shap_output_path,
         )
+
 
 
 @dnn_app.command()
@@ -534,7 +716,14 @@ def regression(
     )
     batch_size = coerce_value(Config.__annotations__["batch_size"], batch_size)
 
-    config = build_config(
+    regression_logic(
+        train_data_path=train_data_path,
+        test_data_path=test_data_path,
+        output_result_path=output_result_path,
+        shap_output_path=shap_output_path,
+        preview_prediction_result=preview_prediction_result,
+        label_name=label_name,
+        do_explain_model=do_explain_model,
         loss=loss,
         hidden_layer_sizes=hidden_layer_sizes,
         activation=activation,
@@ -558,61 +747,5 @@ def regression(
         beta_2=beta_2,
         epsilon=epsilon,
         n_iter_no_change=n_iter_no_change,
-        max_fun=max_fun,
+        max_fun=max_fun
     )
-    model = neural_network.MLPRegressor(
-        loss=config.loss,
-        hidden_layer_sizes=config.hidden_layer_sizes,
-        activation=config.activation,
-        solver=config.solver,
-        alpha=config.alpha,
-        batch_size=config.batch_size,
-        learning_rate=config.learning_rate,
-        learning_rate_init=config.learning_rate_init,
-        power_t=config.power_t,
-        max_iter=config.max_iter,
-        shuffle=config.shuffle,
-        random_state=config.random_state,
-        tol=config.tol,
-        verbose=config.verbose,
-        warm_start=config.warm_start,
-        momentum=config.momentum,
-        nesterovs_momentum=config.nesterovs_momentum,
-        early_stopping=config.early_stopping,
-        validation_fraction=config.validation_fraction,
-        beta_1=config.beta_1,
-        beta_2=config.beta_2,
-        epsilon=config.epsilon,
-        n_iter_no_change=config.n_iter_no_change,
-        max_fun=config.max_fun,
-    )
-
-    logger.info("Loading training data.")
-    train_X, train_y = load_data(train_data_path, label_name)
-    logger.info("Training model.")
-    model.fit(train_X, train_y)
-    logger.info("Finished model training.")
-
-    logger.info("Loading testing data.")
-    test_X = load_data(test_data_path)
-    test_X = test_X[train_X.columns]
-    logger.info("Predicting test data")
-    predictions = model.predict(test_X)
-    test_pred = test_X.copy()
-    test_pred["prediction"] = predictions
-    test_pred.to_csv(output_result_path, index=False)
-    logger.info(f"Prediction Finished, result saved to {output_result_path}")
-
-    if preview_prediction_result is True:
-        print(test_pred)
-
-    if do_explain_model is True:
-        explain_model(
-            model,
-            train_X,
-            test_X,
-            train_y,
-            predictions,
-            "kernel",
-            shap_output_path,
-        )
