@@ -7,7 +7,7 @@ from typing import Optional, Union, get_args, get_origin
 import typer
 from sklearn import svm
 
-from .utils import load_data
+from .utils import ExplainerType, explain_model, load_data
 
 svm_app = typer.Typer()
 logger = logging.getLogger(__name__)
@@ -301,8 +301,12 @@ def classification(
     train_data_path: str = "example/data/classification_train.csv",
     test_data_path: str = "example/data/classification_test.csv",
     output_result_path: str = "example/data/classification_output.csv",
+    shap_output_path: Optional[str] = typer.Option(
+        None, help="Output folder for SHAP plot and values."
+    ),
     preview_prediction_result: bool = False,
     label_name: str = "label",
+    do_explain_model: bool = False,
     C: Optional[float] = typer.Option(
         None,
         help="Regularization parameter. The strength of the regularization is inversely proportional to C. Must be strictly positive. Default: 1.0",
@@ -516,6 +520,21 @@ def classification(
     if preview_prediction_result is True:
         print(test_pred)
 
+    if do_explain_model is True:
+        if svm_type == SVMType.Linear or kernel == Kernel.linear:
+            explainer_type = "linear"
+        else:
+            explainer_type = "kernel"
+        explain_model(
+            model,
+            train_X,
+            test_X,
+            train_y,
+            predictions,
+            explainer_type,
+            shap_output_path,
+        )
+
 
 # typer.option default set to None, Actual default value already set when initialize Config object.
 @svm_app.command()
@@ -524,8 +543,12 @@ def regression(
     train_data_path: str = "example/data/regression_train.csv",
     test_data_path: str = "example/data/regression_test.csv",
     output_result_path: str = "example/data/regression_output.csv",
+    shap_output_path: Optional[str] = typer.Option(
+        None, help="Output folder for SHAP plot and values."
+    ),
     preview_prediction_result: bool = False,
     label_name: str = "label",
+    do_explain_model: bool = False,
     C: Optional[float] = typer.Option(
         None,
         help="Regularization parameter. The strength of the regularization is inversely proportional to C. Must be strictly positive. Default: 1.0",
@@ -695,3 +718,18 @@ def regression(
 
     if preview_prediction_result is True:
         print(test_pred)
+
+    if do_explain_model is True:
+        if svm_type == SVMType.Linear or kernel == Kernel.linear:
+            explainer_type = "linear"
+        else:
+            explainer_type = "kernel"
+        explain_model(
+            model,
+            train_X,
+            test_X,
+            train_y,
+            predictions,
+            explainer_type,
+            shap_output_path,
+        )
