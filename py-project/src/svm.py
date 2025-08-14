@@ -521,8 +521,12 @@ def classification(
         print(test_pred)
 
     if do_explain_model is True:
+        if svm_type == SVMType.Linear or kernel == Kernel.linear:
+            explainer_type = "linear"
+        else:
+            explainer_type = "kernel"
         explain_model(
-            model, train_X, test_X, train_y, predictions, "kernel", shap_output_path
+            model, train_X, test_X, train_y, predictions, explainer_type, shap_output_path
         )
 
 
@@ -710,6 +714,10 @@ def regression(
         print(test_pred)
 
     if do_explain_model is True:
+        if svm_type == SVMType.Linear or kernel == Kernel.linear:
+            explainer_type = "linear"
+        else:
+            explainer_type = "kernel"
         explain_model(
-            model, train_X, test_X, train_y, predictions, "kernel", shap_output_path
+            model, train_X, test_X, train_y, predictions, explainer_type, shap_output_path
         )
