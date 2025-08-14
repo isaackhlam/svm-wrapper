@@ -7,7 +7,7 @@ import typer
 from sklearn import neural_network
 
 from .svm import coerce_value
-from .utils import load_data, explain_model
+from .utils import explain_model, load_data
 
 dnn_app = typer.Typer()
 logger = logging.getLogger(__name__)
@@ -190,6 +190,7 @@ def build_config(
             )
 
     return config
+
 
 def classification_logic(
     train_data_path: str,
@@ -462,7 +463,7 @@ def classification(
         beta_2=beta_2,
         epsilon=epsilon,
         n_iter_no_change=n_iter_no_change,
-        max_fun=max_fun
+        max_fun=max_fun,
     )
 
 
@@ -581,7 +582,6 @@ def regression_logic(
             "kernel",
             shap_output_path,
         )
-
 
 
 @dnn_app.command()
@@ -747,5 +747,5 @@ def regression(
         beta_2=beta_2,
         epsilon=epsilon,
         n_iter_no_change=n_iter_no_change,
-        max_fun=max_fun
+        max_fun=max_fun,
     )

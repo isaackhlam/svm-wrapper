@@ -444,7 +444,6 @@ def classification_logic(
         )
 
 
-
 # typer.option default set to None, Actual default value already set when initialize Config object.
 @svm_app.command()
 def classification(
@@ -627,7 +626,7 @@ def regression_logic(
     cache_size: Optional[float],
     verbose: Optional[Union[bool, int]],
     max_iter: Optional[int],
-    epsilon: Optional[float]
+    epsilon: Optional[float],
 ):
 
     config = build_config(
