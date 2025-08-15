@@ -156,38 +156,89 @@ async def svm_reg_run(
 
 
 # Repeat the same pattern for svm_cls_logic, dnn
+@app.get("/svm/cls/", response_class=HTMLResponse)
 def svm_cls_form():
     return generate_form(svm_classification, "/svm/cls/run", "SVM Classification")
 
 @app.post("/svm/cls/run")
 async def svm_cls_run(
+    request: Request,
     train_data_path: UploadFile = File(...),
     test_data_path: UploadFile = File(...),
-    **kwargs
+    label_name: str = Form('label'),
+    svm_type: str = Form(...),
+    C: Optional[float] = Form(1.0),
+    kernel: str = Form("rbf"),
+    preview_prediction_result: Optional[bool] = Form(False),
+    do_explain_model: Optional[bool] = Form(False),
+    nu: Optional[float] = Form(0.5),
+    penalty: Optional[Penalty] = Form(None),
+    loss: Optional[Loss] = Form("squared_hinge"),
+    dual: Optional[Union[str, bool]] = Form('auto'),
+    multi_class: Optional[MultiClass] = Form('ovr'),
+    fit_intercept: Optional[bool] = Form(True),
+    intercept_scalling: Optional[float] = Form(1.0),
+    degree: Optional[int] = Form(3),
+    gamma: Optional[Union[float, str]] = Form('scale'),
+    coef0: Optional[float] = Form(0.0),
+    shrinking: Optional[bool] = Form(True),
+    probability: Optional[bool] = Form(False),
+    tol: Optional[float] = Form(1e-3),
+    cache_size: Optional[float] = Form(200),
+    class_weight: Optional[Union[dict, str]] = Form(None),
+    verbose: Optional[Union[bool, int]] = Form(False),
+    max_iter: Optional[int] = Form(-1),
+    decision_function_shape: Optional[DecisionFunctionShape] = Form('ovr'),
+    break_ties: Optional[bool] = Form(False),
+    random_state: Optional[int] = Form(42),
 ):
+
+# Save uploaded files
     train_path = Path(f"tmp_{train_data_path.filename}")
-    train_path.write_bytes(await train_data_path.read())
+    with open(train_path, "wb") as f:
+        f.write(await train_data_path.read())
 
     test_path = Path(f"tmp_{test_data_path.filename}")
-    test_path.write_bytes(await test_data_path.read())
+    with open(test_path, "wb") as f:
+        f.write(await test_data_path.read())
 
-    output_path = Path("svm_cls_output.csv")
+    output_path = Path("output.csv")
 
-    kwargs["train_data_path"] = str(train_path)
-    kwargs["test_data_path"] = str(test_path)
-    kwargs["output_result_path"] = str(output_path)
-
-    # Convert Enums where needed
-    if "svm_type" in kwargs:
-        kwargs["svm_type"] = SVMType[kwargs["svm_type"]]
-    if "kernel" in kwargs:
-        kwargs["kernel"] = Kernel[kwargs["kernel"]]
-    if "loss" in kwargs:
-        kwargs["loss"] = Loss[kwargs["loss"]]
-
-    svm_classification(**kwargs)
+    svm_classification(
+        train_data_path=str(train_path),
+        test_data_path=str(test_path),
+        output_result_path=str(output_path),
+        shap_output_path=None,
+        preview_prediction_result=preview_prediction_result,
+        label_name=label_name,
+        do_explain_model=do_explain_model,
+        svm_type=SVMType[svm_type],
+        C=C,
+        nu=nu,
+        penalty=penalty,
+        loss=Loss[loss],
+        dual=dual,
+        multi_class=multi_class,
+        fit_intercept=fit_intercept,
+        intercept_scalling=intercept_scalling,
+        kernel=Kernel[kernel],
+        degree=degree,
+        gamma=gamma,
+        coef0=coef0,
+        shrinking=shrinking,
+        probability=probability,
+        tol=tol,
+        cache_size=cache_size,
+        class_weight=class_weight,
+        verbose=verbose,
+        max_iter=max_iter,
+        decision_function_shape=decision_function_shape,
+        break_ties=break_ties,
+        random_state=random_state
+    )
 
     return FileResponse(output_path, filename="result.csv")
+
 
 
 if __name__ == "__main__":
