@@ -21,6 +21,7 @@ app = FastAPI()
 
 # Tell the generator which params are file uploads
 FILE_PARAMS = {"train_data_path", "test_data_path"}
+IGNORE_FIELD = {"shap_output_path", "preview_prediction_result", "do_explain_model"}
 
 
 def unwrap_optional_enum(ann):
@@ -51,6 +52,8 @@ def generate_form(func, action_url: str, title: str):
 
         field_html = f"<label>{name}</label><br>"
 
+        if name in IGNORE_FIELD:
+            continue
         if name in FILE_PARAMS:
             field_html += f"<input type='file' name='{name}'><br><br>"
         elif isinstance(ann, type) and issubclass(ann, Enum):
