@@ -1,32 +1,21 @@
 import inspect
-import uvicorn
-from fastapi import FastAPI, Form, File, UploadFile, Request
-from fastapi.responses import HTMLResponse, FileResponse
-from typing import Optional, Union, get_origin, get_args
 from enum import Enum
 from pathlib import Path
+from typing import Optional, Union, get_args, get_origin
 
-from src.svm import (
-    regression_logic as svm_regression,
-    classification_logic as svm_classification,
-    Loss,
-    RegressionLoss,
-    Kernel,
-    SVMType,
-    DecisionFunctionShape,
-    Penalty,
-    MultiClass,
-    coerce_value,
-)
-from src.dnn import (
-    regression_logic as dnn_regression,
-    classification_logic as dnn_classification,
-    Activation,
-    Solver,
-    LearningRate,
-    Config,
-    Loss as DNNLoss
-)
+import uvicorn
+from fastapi import FastAPI, File, Form, Request, UploadFile
+from fastapi.responses import FileResponse, HTMLResponse
+from src.dnn import Activation, Config, LearningRate
+from src.dnn import Loss as DNNLoss
+from src.dnn import Solver
+from src.dnn import classification_logic as dnn_classification
+from src.dnn import regression_logic as dnn_regression
+from src.svm import (DecisionFunctionShape, Kernel, Loss, MultiClass, Penalty,
+                     RegressionLoss, SVMType)
+from src.svm import classification_logic as svm_classification
+from src.svm import coerce_value
+from src.svm import regression_logic as svm_regression
 
 app = FastAPI()
 
@@ -106,7 +95,6 @@ def home():
     <a href='/dnn/cls/'>DNN Classification</a><br>
     <a href='/dnn/reg/'>DNN Regression</a><br>
     """
-
 
 
 # Repeat the same pattern for svm_cls_logic, dnn
@@ -268,7 +256,6 @@ async def svm_reg_run(
     return FileResponse(output_path, filename="result.csv")
 
 
-
 # Repeat the same pattern for svm_cls_logic, dnn
 @app.get("/dnn/cls/", response_class=HTMLResponse)
 def dnn_cls_form():
@@ -356,6 +343,7 @@ async def dnn_cls_run(
     )
 
     return FileResponse(output_path, filename="result.csv")
+
 
 # Repeat the same pattern for svm_cls_logic, dnn
 @app.get("/dnn/reg/", response_class=HTMLResponse)
@@ -446,6 +434,7 @@ async def dnn_reg_run(
     )
 
     return FileResponse(output_path, filename="result.csv")
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
