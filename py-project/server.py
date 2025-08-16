@@ -25,6 +25,7 @@ from src.dnn import (
     Solver,
     LearningRate,
     Config,
+    Loss as DNNLoss
 )
 
 app = FastAPI()
@@ -361,6 +362,95 @@ async def dnn_cls_run(
 
     return FileResponse(output_path, filename="result.csv")
 
+# Repeat the same pattern for svm_cls_logic, dnn
+@app.get("/dnn/reg/", response_class=HTMLResponse)
+def dnn_reg_form():
+    return generate_form(dnn_classification, "/dnn/reg/run", "DNN Regression")
+
+
+@app.post("/dnn/reg/run")
+async def dnn_reg_run(
+    request: Request,
+    train_data_path: UploadFile = File(...),
+    test_data_path: UploadFile = File(...),
+    label_name: str = Form("label"),
+    preview_prediction_result: bool = Form(False),
+    do_explain_model: bool = Form(False),
+    hidden_layer_sizes: Optional[str] = Form("(100,)"),
+    activation: Optional[Activation] = Form("relu"),
+    solver: Optional[Solver] = Form("adam"),
+    alpha: Optional[float] = Form(0.0001),
+    batch_size: Optional[Union[str, float]] = Form("auto"),
+    learning_rate: Optional[LearningRate] = Form("constant"),
+    learning_rate_init: Optional[float] = Form(0.001),
+    power_t: Optional[float] = Form(0.5),
+    loss: Optional[DNNLoss] = Form("squared_error"),
+    max_iter: Optional[int] = Form(200),
+    shuffle: Optional[bool] = Form(True),
+    random_state: Optional[int] = Form(42),
+    tol: Optional[float] = Form(1e-4),
+    verbose: Optional[bool] = Form(False),
+    warm_start: Optional[bool] = Form(False),
+    momentum: Optional[float] = Form(0.9),
+    nesterovs_momentum: Optional[bool] = Form(True),
+    early_stopping: Optional[bool] = Form(False),
+    validation_fraction: Optional[float] = Form(0.1),
+    beta_1: Optional[float] = Form(0.9),
+    beta_2: Optional[float] = Form(0.999),
+    epsilon: Optional[float] = Form(1e-8),
+    n_iter_no_change: Optional[int] = Form(10),
+    max_fun: Optional[int] = Form(15000),
+):
+
+    # Save uploaded files
+    hidden_layer_sizes = coerce_value(
+        Config.__annotations__["hidden_layer_sizes"], hidden_layer_sizes
+    )
+    train_path = Path(f"tmp_{train_data_path.filename}")
+    with open(train_path, "wb") as f:
+        f.write(await train_data_path.read())
+
+    test_path = Path(f"tmp_{test_data_path.filename}")
+    with open(test_path, "wb") as f:
+        f.write(await test_data_path.read())
+
+    output_path = Path("output.csv")
+
+    dnn_regression(
+        train_data_path=str(train_path),
+        test_data_path=str(test_path),
+        output_result_path=str(output_path),
+        shap_output_path=None,
+        preview_prediction_result=preview_prediction_result,
+        label_name=label_name,
+        do_explain_model=do_explain_model,
+        loss=DNNLoss[loss],
+        hidden_layer_sizes=hidden_layer_sizes,
+        activation=Activation[activation],
+        solver=Solver[solver],
+        alpha=alpha,
+        batch_size=batch_size,
+        learning_rate=LearningRate[learning_rate],
+        learning_rate_init=learning_rate_init,
+        power_t=power_t,
+        max_iter=max_iter,
+        shuffle=shuffle,
+        random_state=random_state,
+        tol=tol,
+        verbose=verbose,
+        warm_start=warm_start,
+        momentum=momentum,
+        nesterovs_momentum=nesterovs_momentum,
+        early_stopping=early_stopping,
+        validation_fraction=validation_fraction,
+        beta_1=beta_1,
+        beta_2=beta_2,
+        epsilon=epsilon,
+        n_iter_no_change=n_iter_no_change,
+        max_fun=max_fun,
+    )
+
+    return FileResponse(output_path, filename="result.csv")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
