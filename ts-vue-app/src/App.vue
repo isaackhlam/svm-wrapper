@@ -1,11 +1,10 @@
 <script setup lang="ts">
 //import HelloWorld from './components/HelloWorld.vue'
+import { RouterView } from 'vue-router';
 </script>
 
 <template>
-  <div>
-    <Button label="Verify" />
-  </div>
+  <RouterView />
 </template>
 
 <style scoped>
