@@ -4,7 +4,9 @@ import { RouterView } from 'vue-router';
 </script>
 
 <template>
-  <RouterView />
+  <component :is="$route.meta.layout || 'div'">
+    <RouterView />
+  </component>
 </template>
 
 <style scoped>
