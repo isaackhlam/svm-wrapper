@@ -16,6 +16,11 @@ const router = createRouter({
       name: 'about',
       meta: { layout: MainLayout },
       component: () => import('../views/AboutView.vue')
+    },
+    {
+      path: '/:pathMatch(.*)*',   // 👈 catch all unmatched routes
+      name: '404',
+      component: () => import('../views/NotFoundView.vue')
     }
   ]
 });
