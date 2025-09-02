@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import HelloWorld from '../components/HelloWorld.vue';
-import SubmitJob from '../components/SubmitJob.vue';
+//import HelloWorld from '../components/HelloWorld.vue';
+import SelectModel from '../components/models/SelectModel.vue';
 </script>
 
 <template>
   <main>
-    <SubmitJob />
+    <SelectModel />
   </main>
 </template>
