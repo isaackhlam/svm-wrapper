@@ -50,9 +50,6 @@ const onFormSubmit = ({ valid }) => {
 </script>
 
 <template>
-  <Card>
-  <template #title> Submit Job </template>
-  <template #content>
     <div class="card flex justify-center">
         <Toast />
 
@@ -188,7 +185,5 @@ const onFormSubmit = ({ valid }) => {
             <Button type="submit" severity="secondary" label="Submit" />
         </Form>
     </div>
-  </template>
-  </Card>
 </template>
 
