@@ -32,3 +32,7 @@ enum TaskType {
 type Mutation {
   trainModel(input: TrainModelInput): TrainModelPayload
 }
+
+type Query {
+  dbconnection: String
+}

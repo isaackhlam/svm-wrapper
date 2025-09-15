@@ -3,6 +3,7 @@ import { createYoga, createSchema } from 'graphql-yoga'
 
 import typeDefs from './schemas';
 import resolvers from './resolvers';
+import baseContext from './contexts/baseContext';
 
 const main = async () => {
   const yoga = createYoga({
@@ -10,6 +11,7 @@ const main = async () => {
       typeDefs: await typeDefs,
       resolvers,
     }),
+    context: baseContext,
   });
   const server = createServer(yoga);
   server.listen(4000, () => {
