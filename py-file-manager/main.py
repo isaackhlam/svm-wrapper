@@ -1,6 +1,6 @@
+import io
 import traceback
 import uuid
-import io
 from typing import Union
 
 from fastapi import FastAPI, File, UploadFile
@@ -25,8 +25,6 @@ else:
 app = FastAPI()
 
 
-
-
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
@@ -36,13 +34,20 @@ def read_root():
 def read_item(item_id: int, q: Union[str, None] = None):
     return {"item_id": item_id, "q": q}
 
+
 @app.post("/upload")
-async def upload(file: UploadFile = File(...)):
+async def upload(file: UploadFile = File(...), key: str = str(...)):
     try:
         fileobj = io.BytesIO(file.file.read())
         # TODO: Parse file extension with key
-        key = str(uuid.uuid4())
-        result = client.put_object(bucket_name, key, fileobj, length=-1, part_size=10*1024*1024,)
+        # key = str(uuid.uuid4())
+        result = client.put_object(
+            bucket_name,
+            key,
+            fileobj,
+            length=-1,
+            part_size=10 * 1024 * 1024,
+        )
         print(f"appended {result.object_name} object; etag: {result.etag}")
     except Exception as ex:
         print(traceback.format_exc())
@@ -50,4 +55,3 @@ async def upload(file: UploadFile = File(...)):
             "statusCode": 400,
             "body": ex,
         }
-

@@ -11,11 +11,27 @@ from src.dnn import Loss as DNNLoss
 from src.dnn import Solver
 from src.dnn import classification_logic as dnn_classification
 from src.dnn import regression_logic as dnn_regression
-from src.svm import (DecisionFunctionShape, Kernel, Loss, MultiClass, Penalty,
-                     RegressionLoss, SVMType)
+from src.svm import (
+    DecisionFunctionShape,
+    Kernel,
+    Loss,
+    MultiClass,
+    Penalty,
+    RegressionLoss,
+    SVMType,
+)
 from src.svm import classification_logic as svm_classification
 from src.svm import coerce_value
 from src.svm import regression_logic as svm_regression
+from minio import Minio
+
+client = Minio(
+    "127.0.0.1:9000",
+    access_key="minioadmin",
+    secret_key="minioadmin",
+    secure=False,
+)
+bucket_name = "my-bucket"
 
 app = FastAPI()
 
@@ -181,6 +197,65 @@ async def svm_cls_run(
         decision_function_shape=decision_function_shape,
         break_ties=break_ties,
         random_state=random_state,
+    )
+
+    return FileResponse(output_path, filename="result.csv")
+
+
+@app.post("/svm/cls/run/v2")
+async def svm_cls_run(
+    request: Request,
+    train_data_key: str ,
+    test_data_key: str ,
+    label_name: str = Form("label"),
+    params = {},
+    ):
+
+    # Save uploaded files
+    train_path = Path(f"tmp_{train_data_key}")
+    print(train_path)
+    client.fget_object(bucket_name, train_data_key, train_path)
+
+    test_path = Path(f"tmp_{test_data_key}")
+    client.fget_object(bucket_name, test_data_key, test_path)
+
+    output_path = Path("output.csv")
+    svm_type = "C"
+
+    # TODO: Important!
+    # Consider either pass the key and retrived inside or pass file object directly.
+    # Refactor to process the params...
+    svm_classification(
+        train_data_path=str(train_path),
+        test_data_path=str(test_path),
+        output_result_path=str(output_path),
+        shap_output_path=None,
+        preview_prediction_result=False,
+        label_name=label_name,
+        do_explain_model=False,
+        svm_type=SVMType[svm_type],
+        C=None,
+        nu=None,
+        penalty=None,
+        loss=None,
+        dual=None,
+        multi_class=None,
+        fit_intercept=None,
+        intercept_scalling=None,
+        kernel=None,
+        degree=None,
+        gamma=None,
+        coef0=None,
+        shrinking=None,
+        probability=None,
+        tol=None,
+        cache_size=None,
+        class_weight=None,
+        verbose=None,
+        max_iter=None,
+        decision_function_shape=None,
+        break_ties=None,
+        random_state=None,
     )
 
     return FileResponse(output_path, filename="result.csv")
