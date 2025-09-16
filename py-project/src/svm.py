@@ -2,14 +2,14 @@ import ast
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Union
+from typing import Optional, Union, get_args, get_origin
 
 import typer
 from sklearn import svm
 
-from .utils import load_data
+from .utils import ExplainerType, explain_model, load_data
 
-model_app = typer.Typer()
+svm_app = typer.Typer()
 logger = logging.getLogger(__name__)
 UNSET = object()
 
@@ -267,19 +267,196 @@ def coerce_value(field_type, value):
     if field_type is dict or field_type == dict:
         return ast.literal_eval(value)
 
+    # Handle tuple
+    if origin_type is tuple or field_type is tuple:
+        try:
+            parsed = ast.literal_eval(value)
+            if not isinstance(parsed, tuple):
+                raise ValueError(f"Expected tuple, got {type(parsed)}")
+
+            # If specific tuple element types are specified, coerce each
+            args = get_args(field_type)
+            if args:
+                if len(args) == 2 and args[1] is Ellipsis:
+                    # Tuple[int, ...]
+                    return tuple(coerce_value(args[0], v) for v in parsed)
+                elif len(args) == len(parsed):
+                    return tuple(coerce_value(t, v) for t, v in zip(args, parsed))
+                else:
+                    raise typer.BadParameter(
+                        f"Expected {len(args)} elements, got {len(parsed)}"
+                    )
+            return parsed
+        except Exception as e:
+            raise typer.BadParameter(f"Invalid tuple input: {value!r}. Error: {e}")
+
     # Default: cast to field_type
     return field_type(value)
 
 
+def classification_logic(
+    train_data_path: str,
+    test_data_path: str,
+    output_result_path: str,
+    shap_output_path: Optional[str],
+    preview_prediction_result: bool,
+    label_name: str,
+    do_explain_model: bool,
+    svm_type: SVMType,
+    C: Optional[float],
+    nu: Optional[float],
+    penalty: Optional[Penalty],
+    loss: Optional[Loss],
+    dual: Optional[Union[str, bool]],
+    multi_class: Optional[MultiClass],
+    fit_intercept: Optional[bool],
+    intercept_scalling: Optional[float],
+    kernel: Optional[Kernel],
+    degree: Optional[int],
+    gamma: Optional[Union[float, str]],
+    coef0: Optional[float],
+    shrinking: Optional[bool],
+    probability: Optional[bool],
+    tol: Optional[float],
+    cache_size: Optional[float],
+    class_weight: Optional[Union[dict, str]],
+    verbose: Optional[Union[bool, int]],
+    max_iter: Optional[int],
+    decision_function_shape: Optional[DecisionFunctionShape],
+    break_ties: Optional[bool],
+    random_state: Optional[int],
+):
+    config = build_config(
+        svm_type=svm_type,
+        C=C,
+        nu=nu,
+        penalty=penalty,
+        loss=loss,
+        dual=dual,
+        multi_class=multi_class,
+        fit_intercept=fit_intercept,
+        intercept_scalling=intercept_scalling,
+        kernel=kernel,
+        degree=degree,
+        gamma=gamma,
+        coef0=coef0,
+        shrinking=shrinking,
+        probability=probability,
+        tol=tol,
+        cache_size=cache_size,
+        class_weight=class_weight,
+        verbose=verbose,
+        max_iter=max_iter,
+        decision_function_shape=decision_function_shape,
+        break_ties=break_ties,
+        random_state=random_state,
+        regression_loss=None,
+        epsilon=None,
+    )
+
+    if svm_type == SVMType.C:
+        model = svm.SVC(
+            C=config.C,
+            kernel=config.kernel,
+            degree=config.degree,
+            gamma=config.gamma,
+            coef0=config.coef0,
+            shrinking=config.shrinking,
+            probability=config.probability,
+            tol=config.tol,
+            cache_size=config.cache_size,
+            class_weight=config.class_weight,
+            verbose=config.verbose,
+            max_iter=config.max_iter,
+            decision_function_shape=config.decision_function_shape,
+            break_ties=config.break_ties,
+            random_state=config.random_state,
+        )
+    elif svm_type == SVMType.Nu:
+        model = svm.NuSVC(
+            nu=config.nu,
+            kernel=config.kernel,
+            degree=config.degree,
+            gamma=config.gamma,
+            coef0=config.coef0,
+            shrinking=config.shrinking,
+            probability=config.probability,
+            tol=config.tol,
+            cache_size=config.cache_size,
+            class_weight=config.class_weight,
+            verbose=config.verbose,
+            max_iter=config.max_iter,
+            decision_function_shape=config.decision_function_shape,
+            break_ties=config.break_ties,
+            random_state=config.random_state,
+        )
+    elif svm_type == SVMType.Linear:
+        model = svm.LinearSVC(
+            penalty=config.penalty,
+            loss=config.loss,
+            dual=config.dual,
+            tol=config.tol,
+            C=config.C,
+            multi_class=config.multi_class,
+            fit_intercept=config.fit_intercept,
+            intercept_scaling=config.intercept_scaling,
+            class_weight=config.class_weight,
+            verbose=config.verbose,
+            random_state=config.random_state,
+            max_iter=config.max_iter,
+        )
+    else:
+        logger.error(f"Unknown SVM Type, Supported types: {SVMType}")
+        raise Exception("Unknown SVM Type")
+
+    logger.info("Loading training data.")
+    train_X, train_y = load_data(train_data_path, label_name)
+    logger.info("Training model.")
+    model.fit(train_X, train_y)
+    logger.info("Finished model training.")
+
+    logger.info("Loading testing data.")
+    test_X = load_data(test_data_path)
+    test_X = test_X[train_X.columns]
+    logger.info("Predicting test data")
+    predictions = model.predict(test_X)
+    test_pred = test_X.copy()
+    test_pred["prediction"] = predictions
+    test_pred.to_csv(output_result_path, index=False)
+    logger.info(f"Prediction Finished, result saved to {output_result_path}")
+
+    if preview_prediction_result is True:
+        print(test_pred)
+
+    if do_explain_model is True:
+        if svm_type == SVMType.Linear or kernel == Kernel.linear:
+            explainer_type = "linear"
+        else:
+            explainer_type = "kernel"
+        explain_model(
+            model,
+            train_X,
+            test_X,
+            train_y,
+            predictions,
+            explainer_type,
+            shap_output_path,
+        )
+
+
 # typer.option default set to None, Actual default value already set when initialize Config object.
-@model_app.command()
+@svm_app.command()
 def classification(
     svm_type: SVMType = "C",
     train_data_path: str = "example/data/classification_train.csv",
     test_data_path: str = "example/data/classification_test.csv",
     output_result_path: str = "example/data/classification_output.csv",
+    shap_output_path: Optional[str] = typer.Option(
+        None, help="Output folder for SHAP plot and values."
+    ),
     preview_prediction_result: bool = False,
     label_name: str = "label",
+    do_explain_model: bool = False,
     C: Optional[float] = typer.Option(
         None,
         help="Regularization parameter. The strength of the regularization is inversely proportional to C. Must be strictly positive. Default: 1.0",
@@ -391,7 +568,14 @@ def classification(
     class_weight = coerce_value(Config.__annotations__["class_weight"], class_weight)
     verbose = coerce_value(Config.__annotations__["verbose"], verbose)
 
-    config = build_config(
+    classification_logic(
+        train_data_path=train_data_path,
+        test_data_path=test_data_path,
+        output_result_path=output_result_path,
+        shap_output_path=shap_output_path,
+        preview_prediction_result=preview_prediction_result,
+        label_name=label_name,
+        do_explain_model=do_explain_model,
         svm_type=svm_type,
         C=C,
         nu=nu,
@@ -415,173 +599,35 @@ def classification(
         decision_function_shape=decision_function_shape,
         break_ties=break_ties,
         random_state=random_state,
-        regression_loss=None,
-        epsilon=None,
     )
 
-    if svm_type == SVMType.C:
-        model = svm.SVC(
-            C=config.C,
-            kernel=config.kernel,
-            degree=config.degree,
-            gamma=config.gamma,
-            coef0=config.coef0,
-            shrinking=config.shrinking,
-            probability=config.probability,
-            tol=config.tol,
-            cache_size=config.cache_size,
-            class_weight=config.class_weight,
-            verbose=config.verbose,
-            max_iter=config.max_iter,
-            decision_function_shape=config.decision_function_shape,
-            break_ties=config.break_ties,
-            random_state=config.random_state,
-        )
-    elif svm_type == SVMType.Nu:
-        model = svm.NuSVC(
-            nu=config.nu,
-            kernel=config.kernel,
-            degree=config.degree,
-            gamma=config.gamma,
-            coef0=config.coef0,
-            shrinking=config.shrinking,
-            probability=config.probability,
-            tol=config.tol,
-            cache_size=config.cache_size,
-            class_weight=config.class_weight,
-            verbose=config.verbose,
-            max_iter=config.max_iter,
-            decision_function_shape=config.decision_function_shape,
-            break_ties=config.break_ties,
-            random_state=config.random_state,
-        )
-    elif svm_type == SVMType.Linear:
-        model = svm.LinearSVC(
-            penalty=config.penalty,
-            loss=config.loss,
-            dual=config.dual,
-            tol=config.tol,
-            C=config.C,
-            multi_class=config.multi_class,
-            fit_intercept=config.fit_intercept,
-            intercept_scaling=config.intercept_scaling,
-            class_weight=config.class_weight,
-            verbose=config.verbose,
-            random_state=config.random_state,
-            max_iter=config.max_iter,
-        )
-    else:
-        logger.error(f"Unknown SVM Type, Supported types: {SVMType}")
-        raise Exception("Unknown SVM Type")
 
-    logger.info("Loading training data.")
-    train_X, train_y = load_data(train_data_path, label_name)
-    logger.info("Training model.")
-    model.fit(train_X, train_y)
-    logger.info("Finished model training.")
-
-    logger.info("Loading testing data.")
-    test_X = load_data(test_data_path)
-    test_X = test_X[train_X.columns]
-    logger.info("Predicting test data")
-    predictions = model.predict(test_X)
-    test_pred = test_X.copy()
-    test_pred["prediction"] = predictions
-    test_pred.to_csv(output_result_path, index=False)
-    logger.info(f"Prediction Finished, result saved to {output_result_path}")
-
-    if preview_prediction_result is True:
-        print(test_pred)
-
-
-# typer.option default set to None, Actual default value already set when initialize Config object.
-@model_app.command()
-def regression(
-    svm_type: SVMType = "C",
-    train_data_path: str = "example/data/regression_train.csv",
-    test_data_path: str = "example/data/regression_test.csv",
-    output_result_path: str = "example/data/regression_output.csv",
-    preview_prediction_result: bool = False,
-    label_name: str = "label",
-    C: Optional[float] = typer.Option(
-        None,
-        help="Regularization parameter. The strength of the regularization is inversely proportional to C. Must be strictly positive. Default: 1.0",
-        show_default=False,
-    ),
-    nu: Optional[float] = typer.Option(
-        None,
-        help="Upper bound on the fraction of margin errors and a lower bound of the fraction of support vectors. Must be in (0, 1]. Default: 0.5",
-        show_default=False,
-    ),
-    epsilon: Optional[float] = typer.Option(
-        None,
-        help="Epsilon parameter in the epsilon-insensitive loss function. Default: 0.0",
-        show_default=False,
-    ),
-    loss: Optional[RegressionLoss] = typer.Option(
-        RegressionLoss.epsilon_insensitive,
-        help="Loss function. Default: epsilon_insensitive",
-        show_default=False,
-    ),
-    dual: Optional[str] = typer.Option(
-        None,
-        help="Select the algorithm to either solve the dual or primal optimization problem. Avaiable option: true, false, auto. Default: auto",
-        show_default=False,
-    ),
-    fit_intercept: Optional[bool] = typer.Option(
-        None,
-        help="Whether or not to fit an intercept. Default: True",
-        show_default=False,
-    ),
-    intercept_scalling: Optional[float] = typer.Option(
-        None,
-        help="Allow intercept term to have a different regularization behavior compared to the other features, Default: 1.0",
-        show_default=False,
-    ),
-    kernel: Optional[Kernel] = typer.Option(
-        Kernel.rbf, help="Kernal Type. Default: rbf", show_default=False
-    ),
-    degree: Optional[int] = typer.Option(
-        None,
-        help="Degree of the polynomial kernel function. Default: 3",
-        show_default=False,
-    ),
-    gamma: Optional[str] = typer.Option(
-        None,
-        help="Kernel coefficient for 'rbf', 'poly' and sigmoid'. Default: 'scale'",
-        show_default=False,
-    ),
-    coef0: Optional[float] = typer.Option(
-        None,
-        help="Independent term in kernel function. Default: 0.0",
-        show_default=False,
-    ),
-    shrinking: Optional[bool] = typer.Option(
-        None,
-        help="Whether to use the shrinking heuristic, Default: True",
-        show_default=False,
-    ),
-    tol: Optional[float] = typer.Option(
-        None,
-        help="Tolerance for stopping criterion. Default: [Linear] 1e-4, [C|Nu] 1e-3",
-        show_default=False,
-    ),
-    cache_size: Optional[float] = typer.Option(
-        None, help="Size of the kernel cache (in MB). Default: 200", show_default=False
-    ),
-    verbose: Optional[str] = typer.Option(
-        None, help="Enable verbose output. Default: False", show_default=False
-    ),
-    max_iter: Optional[int] = typer.Option(
-        None,
-        help="Hard limit on iterations within solver, or -1 for no limit. Default: [C|Nu] -1, [Linear]: 1000",
-        show_default=False,
-    ),
+def regression_logic(
+    train_data_path: str,
+    test_data_path: str,
+    output_result_path: str,
+    shap_output_path: Optional[str],
+    preview_prediction_result: bool,
+    label_name: str,
+    do_explain_model: bool,
+    svm_type: SVMType,
+    C: Optional[float],
+    nu: Optional[float],
+    loss: Optional[RegressionLoss],
+    dual: Optional[Union[str, bool]],
+    fit_intercept: Optional[bool],
+    intercept_scalling: Optional[float],
+    kernel: Optional[Kernel],
+    degree: Optional[int],
+    gamma: Optional[Union[float, str]],
+    coef0: Optional[float],
+    shrinking: Optional[bool],
+    tol: Optional[float],
+    cache_size: Optional[float],
+    verbose: Optional[Union[bool, int]],
+    max_iter: Optional[int],
+    epsilon: Optional[float],
 ):
-
-    dual = coerce_value(Config.__annotations__["dual"], dual)
-    gamma = coerce_value(Config.__annotations__["gamma"], gamma)
-    verbose = coerce_value(Config.__annotations__["verbose"], verbose)
 
     config = build_config(
         svm_type=svm_type,
@@ -672,3 +718,139 @@ def regression(
 
     if preview_prediction_result is True:
         print(test_pred)
+
+    if do_explain_model is True:
+        if svm_type == SVMType.Linear or kernel == Kernel.linear:
+            explainer_type = "linear"
+        else:
+            explainer_type = "kernel"
+        explain_model(
+            model,
+            train_X,
+            test_X,
+            train_y,
+            predictions,
+            explainer_type,
+            shap_output_path,
+        )
+
+
+# typer.option default set to None, Actual default value already set when initialize Config object.
+@svm_app.command()
+def regression(
+    svm_type: SVMType = "C",
+    train_data_path: str = "example/data/regression_train.csv",
+    test_data_path: str = "example/data/regression_test.csv",
+    output_result_path: str = "example/data/regression_output.csv",
+    shap_output_path: Optional[str] = typer.Option(
+        None, help="Output folder for SHAP plot and values."
+    ),
+    preview_prediction_result: bool = False,
+    label_name: str = "label",
+    do_explain_model: bool = False,
+    C: Optional[float] = typer.Option(
+        None,
+        help="Regularization parameter. The strength of the regularization is inversely proportional to C. Must be strictly positive. Default: 1.0",
+        show_default=False,
+    ),
+    nu: Optional[float] = typer.Option(
+        None,
+        help="Upper bound on the fraction of margin errors and a lower bound of the fraction of support vectors. Must be in (0, 1]. Default: 0.5",
+        show_default=False,
+    ),
+    epsilon: Optional[float] = typer.Option(
+        None,
+        help="Epsilon parameter in the epsilon-insensitive loss function. Default: 0.0",
+        show_default=False,
+    ),
+    loss: Optional[RegressionLoss] = typer.Option(
+        RegressionLoss.epsilon_insensitive,
+        help="Loss function. Default: epsilon_insensitive",
+        show_default=False,
+    ),
+    dual: Optional[str] = typer.Option(
+        None,
+        help="Select the algorithm to either solve the dual or primal optimization problem. Avaiable option: true, false, auto. Default: auto",
+        show_default=False,
+    ),
+    fit_intercept: Optional[bool] = typer.Option(
+        None,
+        help="Whether or not to fit an intercept. Default: True",
+        show_default=False,
+    ),
+    intercept_scalling: Optional[float] = typer.Option(
+        None,
+        help="Allow intercept term to have a different regularization behavior compared to the other features, Default: 1.0",
+        show_default=False,
+    ),
+    kernel: Optional[Kernel] = typer.Option(
+        Kernel.rbf, help="Kernal Type. Default: rbf", show_default=False
+    ),
+    degree: Optional[int] = typer.Option(
+        None,
+        help="Degree of the polynomial kernel function. Default: 3",
+        show_default=False,
+    ),
+    gamma: Optional[str] = typer.Option(
+        None,
+        help="Kernel coefficient for 'rbf', 'poly' and sigmoid'. Default: 'scale'",
+        show_default=False,
+    ),
+    coef0: Optional[float] = typer.Option(
+        None,
+        help="Independent term in kernel function. Default: 0.0",
+        show_default=False,
+    ),
+    shrinking: Optional[bool] = typer.Option(
+        None,
+        help="Whether to use the shrinking heuristic, Default: True",
+        show_default=False,
+    ),
+    tol: Optional[float] = typer.Option(
+        None,
+        help="Tolerance for stopping criterion. Default: [Linear] 1e-4, [C|Nu] 1e-3",
+        show_default=False,
+    ),
+    cache_size: Optional[float] = typer.Option(
+        None, help="Size of the kernel cache (in MB). Default: 200", show_default=False
+    ),
+    verbose: Optional[str] = typer.Option(
+        None, help="Enable verbose output. Default: False", show_default=False
+    ),
+    max_iter: Optional[int] = typer.Option(
+        None,
+        help="Hard limit on iterations within solver, or -1 for no limit. Default: [C|Nu] -1, [Linear]: 1000",
+        show_default=False,
+    ),
+):
+
+    dual = coerce_value(Config.__annotations__["dual"], dual)
+    gamma = coerce_value(Config.__annotations__["gamma"], gamma)
+    verbose = coerce_value(Config.__annotations__["verbose"], verbose)
+
+    regression_logic(
+        train_data_path=train_data_path,
+        test_data_path=test_data_path,
+        output_result_path=output_result_path,
+        shap_output_path=shap_output_path,
+        preview_prediction_result=preview_prediction_result,
+        label_name=label_name,
+        do_explain_model=do_explain_model,
+        svm_type=svm_type,
+        C=C,
+        nu=nu,
+        loss=loss,
+        dual=dual,
+        fit_intercept=fit_intercept,
+        intercept_scalling=intercept_scalling,
+        kernel=kernel,
+        degree=degree,
+        gamma=gamma,
+        coef0=coef0,
+        shrinking=shrinking,
+        tol=tol,
+        cache_size=cache_size,
+        verbose=verbose,
+        max_iter=max_iter,
+        epsilon=epsilon,
+    )
