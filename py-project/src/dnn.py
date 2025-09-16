@@ -91,7 +91,7 @@ def build_config(
     n_iter_no_change: Optional[int],
     max_fun: Optional[int],
 ) -> Config:
-    config = Config
+    config = Config()
 
     if loss is not None:
         config.loss = loss
