@@ -204,7 +204,7 @@ def classification_logic(
     activation: Optional[Activation],
     solver: Optional[Solver],
     alpha: Optional[float],
-    batch_size: Optional[Union[str, float]],
+    batch_size: Optional[Union[str, int]],
     learning_rate: Optional[LearningRate],
     learning_rate_init: Optional[float],
     power_t: Optional[float],
