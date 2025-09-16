@@ -105,7 +105,7 @@ def build_config(
         config.alpha = alpha
     if batch_size is not None:
         if batch_size == "auto" or isinstance(batch_size, int):
-            config.batch_size == batch_size
+            config.batch_size = batch_size
         else:
             logging.error(
                 f"batch_size must be 'auto' or int. Input Value: {batch_size}"
