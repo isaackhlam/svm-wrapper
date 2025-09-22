@@ -1,10 +1,11 @@
 import inspect
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Union, get_args, get_origin
+from typing import Optional, Union, get_args, get_origin, Any, Dict
+import inspect
 
 import uvicorn
-from fastapi import FastAPI, File, Form, Request, UploadFile
+from fastapi import FastAPI, File, Form, Request, UploadFile, Body, Query
 from fastapi.responses import FileResponse, HTMLResponse
 from src.dnn import Activation, Config, LearningRate
 from src.dnn import Loss as DNNLoss
@@ -23,6 +24,7 @@ from src.svm import (
 from src.svm import classification_logic as svm_classification
 from src.svm import coerce_value
 from src.svm import regression_logic as svm_regression
+from src.utils import setup_logger
 from minio import Minio
 
 client = Minio(
@@ -33,6 +35,7 @@ client = Minio(
 )
 bucket_name = "my-bucket"
 
+logger = setup_logger("server.log")
 app = FastAPI()
 
 # Tell the generator which params are file uploads
@@ -122,7 +125,7 @@ def svm_cls_form():
     return generate_form(svm_classification, "/svm/cls/run", "SVM Classification")
 
 
-@app.post("/svm/cls/run")
+@app.post("/svm/cls/run", deprecated=True)
 async def svm_cls_run(
     request: Request,
     train_data_path: UploadFile = File(...),
@@ -203,60 +206,40 @@ async def svm_cls_run(
 
 
 @app.post("/svm/cls/run/v2")
-async def svm_cls_run(
+async def svm_cls_run_v2(
     request: Request,
-    train_data_key: str ,
-    test_data_key: str ,
-    label_name: str = Form("label"),
-    params = {},
+    train_data_key: str = Query(...),
+    test_data_key: str = Query(...),
+    label_name: str = Query(default="label"),
+    params: Dict[str, Any] = Body(default={}),
     ):
+    # TODO: params schema for docs.
 
     # Save uploaded files
     train_path = Path(f"tmp_{train_data_key}")
-    print(train_path)
     client.fget_object(bucket_name, train_data_key, train_path)
 
     test_path = Path(f"tmp_{test_data_key}")
     client.fget_object(bucket_name, test_data_key, test_path)
 
     output_path = Path("output.csv")
-    svm_type = "C"
 
-    # TODO: Important!
-    # Consider either pass the key and retrived inside or pass file object directly.
-    # Refactor to process the params...
+    # TODO: Consider either pass the key and retrived inside or pass file object directly.
+    sig = inspect.signature(svm_classification)
+    accepted_params = set(sig.parameters)
+    filtered_params = {k: v for k, v in params.items() if k in accepted_params}
+    if filtered_params.get("svm_type") == None:
+        filtered_params["svm_type"] = "C"
+
     svm_classification(
         train_data_path=str(train_path),
         test_data_path=str(test_path),
         output_result_path=str(output_path),
-        shap_output_path=None,
-        preview_prediction_result=False,
         label_name=label_name,
-        do_explain_model=False,
-        svm_type=SVMType[svm_type],
-        C=None,
-        nu=None,
-        penalty=None,
-        loss=None,
-        dual=None,
-        multi_class=None,
-        fit_intercept=None,
-        intercept_scalling=None,
-        kernel=None,
-        degree=None,
-        gamma=None,
-        coef0=None,
-        shrinking=None,
-        probability=None,
-        tol=None,
-        cache_size=None,
-        class_weight=None,
-        verbose=None,
-        max_iter=None,
-        decision_function_shape=None,
-        break_ties=None,
-        random_state=None,
+        **filtered_params
     )
+
+    # TODO: Update and Notify job status after finish.
 
     return FileResponse(output_path, filename="result.csv")
 
