@@ -91,7 +91,7 @@ def build_config(
     n_iter_no_change: Optional[int],
     max_fun: Optional[int],
 ) -> Config:
-    config = Config
+    config = Config()
 
     if loss is not None:
         config.loss = loss
@@ -105,7 +105,7 @@ def build_config(
         config.alpha = alpha
     if batch_size is not None:
         if batch_size == "auto" or isinstance(batch_size, int):
-            config.batch_size == batch_size
+            config.batch_size = batch_size
         else:
             logging.error(
                 f"batch_size must be 'auto' or int. Input Value: {batch_size}"
@@ -204,7 +204,7 @@ def classification_logic(
     activation: Optional[Activation] = None,
     solver: Optional[Solver] = None,
     alpha: Optional[float] = None,
-    batch_size: Optional[Union[str, float]] = None,
+    batch_size: Optional[Union[str, int]] = None,
     learning_rate: Optional[LearningRate] = None,
     learning_rate_init: Optional[float] = None,
     power_t: Optional[float] = None,

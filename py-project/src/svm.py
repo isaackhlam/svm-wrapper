@@ -108,7 +108,7 @@ def build_config(
     regression_loss: Optional[RegressionLoss],
     epsilon: Optional[float],
 ) -> Config:
-    config = Config
+    config = Config()
 
     if C is not None:
         if svm_type == SVMType.Nu:
