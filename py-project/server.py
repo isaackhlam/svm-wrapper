@@ -223,6 +223,7 @@ async def svm_cls_run_v2(
     client.fget_object(bucket_name, test_data_key, test_path)
 
     output_path = Path("output.csv")
+    output_key = f"{train_data_key.split('/')[1]}/output.csv"
 
     # TODO: Consider either pass the key and retrived inside or pass file object directly.
     sig = inspect.signature(svm_classification)
@@ -240,6 +241,7 @@ async def svm_cls_run_v2(
     )
 
     # TODO: Update and Notify job status after finish.
+    client.fput_object(bucket_name, output_key, output_path)
 
     return FileResponse(output_path, filename="result.csv")
 
@@ -334,6 +336,7 @@ async def svm_reg_run_v2(
     client.fget_object(bucket_name, test_data_key, test_path)
 
     output_path = Path("output.csv")
+    output_key = f"{train_data_key.split('/')[1]}/output.csv"
 
     # TODO: Consider either pass the key and retrived inside or pass file object directly.
     sig = inspect.signature(svm_regression)
@@ -350,6 +353,7 @@ async def svm_reg_run_v2(
         **filtered_params
     )
 
+    client.fput_object(bucket_name, output_key, output_path)
     # TODO: Update and Notify job status after finish.
 
     return FileResponse(output_path, filename="result.csv")
@@ -462,6 +466,7 @@ async def dnn_cls_run_v2(
     client.fget_object(bucket_name, test_data_key, test_path)
 
     output_path = Path("output.csv")
+    output_key = f"{train_data_key.split('/')[1]}/output.csv"
 
     # TODO: Consider either pass the key and retrived inside or pass file object directly.
     sig = inspect.signature(dnn_classification)
@@ -476,6 +481,7 @@ async def dnn_cls_run_v2(
         **filtered_params
     )
 
+    client.fput_object(bucket_name, output_key, output_path)
     # TODO: Update and Notify job status after finish.
 
     return FileResponse(output_path, filename="result.csv")
@@ -588,6 +594,7 @@ async def dnn_reg_run_v2(
     test_path = Path(f"tmp_{test_data_key}")
     client.fget_object(bucket_name, test_data_key, test_path)
 
+    output_key = f"{train_data_key.split('/')[1]}/output.csv"
     output_path = Path("output.csv")
 
     # TODO: Consider either pass the key and retrived inside or pass file object directly.
@@ -602,6 +609,8 @@ async def dnn_reg_run_v2(
         label_name=label_name,
         **filtered_params
     )
+
+    client.fput_object(bucket_name, output_key, output_path)
 
     # TODO: Update and Notify job status after finish.
 
