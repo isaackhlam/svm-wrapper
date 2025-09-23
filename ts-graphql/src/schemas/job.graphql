@@ -1,0 +1,39 @@
+scalar JSON
+
+type TrainModelPayload {
+  id: ID!
+  status: ModelStatus!
+}
+
+enum ModelStatus {
+  PENDING
+  PROCESSING
+  FINISHED
+  FAILED
+}
+
+input TrainModelInput {
+  modelType: ModelType!
+  taskType: TaskType!
+  id: ID!
+  hyperparameters: JSON
+}
+
+enum ModelType {
+  SVM
+  DNN
+}
+
+enum TaskType {
+  REGRESSION
+  CLASSIFICATION
+}
+
+type Mutation {
+  trainModel(input: TrainModelInput): TrainModelPayload
+}
+
+type Query {
+  dbconnection: String
+  getJobStatus: ModelStatus
+}
