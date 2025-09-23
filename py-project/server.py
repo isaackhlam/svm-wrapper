@@ -249,7 +249,7 @@ def svm_reg_form():
     return generate_form(svm_regression, "/svm/reg/run", "SVM Regression")
 
 
-@app.post("/svm/reg/run")
+@app.post("/svm/reg/run", deprecated=True)
 async def svm_reg_run(
     request: Request,
     train_data_path: UploadFile = File(...),
@@ -316,6 +316,44 @@ async def svm_reg_run(
 
     return FileResponse(output_path, filename="result.csv")
 
+@app.post("/svm/reg/run/v2")
+async def svm_reg_run_v2(
+    request: Request,
+    train_data_key: str = Query(...),
+    test_data_key: str = Query(...),
+    label_name: str = Query(default="label"),
+    params: Dict[str, Any] = Body(default={}),
+    ):
+    # TODO: params schema for docs.
+
+    # Save uploaded files
+    train_path = Path(f"tmp_{train_data_key}")
+    client.fget_object(bucket_name, train_data_key, train_path)
+
+    test_path = Path(f"tmp_{test_data_key}")
+    client.fget_object(bucket_name, test_data_key, test_path)
+
+    output_path = Path("output.csv")
+
+    # TODO: Consider either pass the key and retrived inside or pass file object directly.
+    sig = inspect.signature(svm_regression)
+    accepted_params = set(sig.parameters)
+    filtered_params = {k: v for k, v in params.items() if k in accepted_params}
+    if filtered_params.get("svm_type") == None:
+        filtered_params["svm_type"] = "C"
+
+    svm_regression(
+        train_data_path=str(train_path),
+        test_data_path=str(test_path),
+        output_result_path=str(output_path),
+        label_name=label_name,
+        **filtered_params
+    )
+
+    # TODO: Update and Notify job status after finish.
+
+    return FileResponse(output_path, filename="result.csv")
+
 
 # Repeat the same pattern for svm_cls_logic, dnn
 @app.get("/dnn/cls/", response_class=HTMLResponse)
@@ -323,7 +361,7 @@ def dnn_cls_form():
     return generate_form(dnn_classification, "/dnn/cls/run", "DNN Classification")
 
 
-@app.post("/dnn/cls/run")
+@app.post("/dnn/cls/run", deprecated=True)
 async def dnn_cls_run(
     request: Request,
     train_data_path: UploadFile = File(...),
@@ -406,13 +444,50 @@ async def dnn_cls_run(
     return FileResponse(output_path, filename="result.csv")
 
 
+@app.post("/dnn/cls/run/v2")
+async def dnn_cls_run_v2(
+    request: Request,
+    train_data_key: str = Query(...),
+    test_data_key: str = Query(...),
+    label_name: str = Query(default="label"),
+    params: Dict[str, Any] = Body(default={}),
+    ):
+    # TODO: params schema for docs.
+
+    # Save uploaded files
+    train_path = Path(f"tmp_{train_data_key}")
+    client.fget_object(bucket_name, train_data_key, train_path)
+
+    test_path = Path(f"tmp_{test_data_key}")
+    client.fget_object(bucket_name, test_data_key, test_path)
+
+    output_path = Path("output.csv")
+
+    # TODO: Consider either pass the key and retrived inside or pass file object directly.
+    sig = inspect.signature(dnn_classification)
+    accepted_params = set(sig.parameters)
+    filtered_params = {k: v for k, v in params.items() if k in accepted_params}
+
+    dnn_classification(
+        train_data_path=str(train_path),
+        test_data_path=str(test_path),
+        output_result_path=str(output_path),
+        label_name=label_name,
+        **filtered_params
+    )
+
+    # TODO: Update and Notify job status after finish.
+
+    return FileResponse(output_path, filename="result.csv")
+
+
 # Repeat the same pattern for svm_cls_logic, dnn
 @app.get("/dnn/reg/", response_class=HTMLResponse)
 def dnn_reg_form():
     return generate_form(dnn_classification, "/dnn/reg/run", "DNN Regression")
 
 
-@app.post("/dnn/reg/run")
+@app.post("/dnn/reg/run", deprecated=True)
 async def dnn_reg_run(
     request: Request,
     train_data_path: UploadFile = File(...),
@@ -496,6 +571,41 @@ async def dnn_reg_run(
 
     return FileResponse(output_path, filename="result.csv")
 
+@app.post("/dnn/reg/run/v2")
+async def dnn_reg_run_v2(
+    request: Request,
+    train_data_key: str = Query(...),
+    test_data_key: str = Query(...),
+    label_name: str = Query(default="label"),
+    params: Dict[str, Any] = Body(default={}),
+    ):
+    # TODO: params schema for docs.
+
+    # Save uploaded files
+    train_path = Path(f"tmp_{train_data_key}")
+    client.fget_object(bucket_name, train_data_key, train_path)
+
+    test_path = Path(f"tmp_{test_data_key}")
+    client.fget_object(bucket_name, test_data_key, test_path)
+
+    output_path = Path("output.csv")
+
+    # TODO: Consider either pass the key and retrived inside or pass file object directly.
+    sig = inspect.signature(dnn_regression)
+    accepted_params = set(sig.parameters)
+    filtered_params = {k: v for k, v in params.items() if k in accepted_params}
+
+    dnn_regression(
+        train_data_path=str(train_path),
+        test_data_path=str(test_path),
+        output_result_path=str(output_path),
+        label_name=label_name,
+        **filtered_params
+    )
+
+    # TODO: Update and Notify job status after finish.
+
+    return FileResponse(output_path, filename="result.csv")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
