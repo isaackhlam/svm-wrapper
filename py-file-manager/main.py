@@ -57,6 +57,7 @@ async def upload(file: UploadFile = File(...), key: str = str(...)):
             "body": ex,
         }
 
+
 @app.get("/download/{key}")
 async def download(key: str):
     filename = f"/{key}/output.csv"
@@ -71,9 +72,8 @@ async def download(key: str):
         return StreamingResponse(
             obj,
             media_type=content_type,
-            headers={
-                "Content-Disposition": f'attachment; filename="{key}_output.csv"'
-            })
+            headers={"Content-Disposition": f'attachment; filename="{key}_output.csv"'},
+        )
     except Exception as ex:
         print(traceback.format_exc())
         return {

@@ -318,7 +318,7 @@ def classification_logic(
     shrinking: Optional[bool] = None,
     probability: Optional[bool] = None,
     tol: Optional[float] = None,
-    cache_size: Optional[float] = None ,
+    cache_size: Optional[float] = None,
     class_weight: Optional[Union[dict, str]] = None,
     verbose: Optional[Union[bool, int]] = None,
     max_iter: Optional[int] = None,

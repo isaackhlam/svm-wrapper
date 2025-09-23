@@ -1,31 +1,23 @@
 import inspect
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Union, get_args, get_origin, Any, Dict
-import inspect
+from typing import Any, Dict, Optional, Union, get_args, get_origin
 
 import uvicorn
-from fastapi import FastAPI, File, Form, Request, UploadFile, Body, Query
+from fastapi import Body, FastAPI, File, Form, Query, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse
+from minio import Minio
 from src.dnn import Activation, Config, LearningRate
 from src.dnn import Loss as DNNLoss
 from src.dnn import Solver
 from src.dnn import classification_logic as dnn_classification
 from src.dnn import regression_logic as dnn_regression
-from src.svm import (
-    DecisionFunctionShape,
-    Kernel,
-    Loss,
-    MultiClass,
-    Penalty,
-    RegressionLoss,
-    SVMType,
-)
+from src.svm import (DecisionFunctionShape, Kernel, Loss, MultiClass, Penalty,
+                     RegressionLoss, SVMType)
 from src.svm import classification_logic as svm_classification
 from src.svm import coerce_value
 from src.svm import regression_logic as svm_regression
 from src.utils import setup_logger
-from minio import Minio
 
 client = Minio(
     "127.0.0.1:9000",
@@ -212,7 +204,7 @@ async def svm_cls_run_v2(
     test_data_key: str = Query(...),
     label_name: str = Query(default="label"),
     params: Dict[str, Any] = Body(default={}),
-    ):
+):
     # TODO: params schema for docs.
 
     # Save uploaded files
@@ -237,7 +229,7 @@ async def svm_cls_run_v2(
         test_data_path=str(test_path),
         output_result_path=str(output_path),
         label_name=label_name,
-        **filtered_params
+        **filtered_params,
     )
 
     # TODO: Update and Notify job status after finish.
@@ -318,6 +310,7 @@ async def svm_reg_run(
 
     return FileResponse(output_path, filename="result.csv")
 
+
 @app.post("/svm/reg/run/v2")
 async def svm_reg_run_v2(
     request: Request,
@@ -325,7 +318,7 @@ async def svm_reg_run_v2(
     test_data_key: str = Query(...),
     label_name: str = Query(default="label"),
     params: Dict[str, Any] = Body(default={}),
-    ):
+):
     # TODO: params schema for docs.
 
     # Save uploaded files
@@ -350,7 +343,7 @@ async def svm_reg_run_v2(
         test_data_path=str(test_path),
         output_result_path=str(output_path),
         label_name=label_name,
-        **filtered_params
+        **filtered_params,
     )
 
     client.fput_object(bucket_name, output_key, output_path)
@@ -455,7 +448,7 @@ async def dnn_cls_run_v2(
     test_data_key: str = Query(...),
     label_name: str = Query(default="label"),
     params: Dict[str, Any] = Body(default={}),
-    ):
+):
     # TODO: params schema for docs.
 
     # Save uploaded files
@@ -478,7 +471,7 @@ async def dnn_cls_run_v2(
         test_data_path=str(test_path),
         output_result_path=str(output_path),
         label_name=label_name,
-        **filtered_params
+        **filtered_params,
     )
 
     client.fput_object(bucket_name, output_key, output_path)
@@ -577,6 +570,7 @@ async def dnn_reg_run(
 
     return FileResponse(output_path, filename="result.csv")
 
+
 @app.post("/dnn/reg/run/v2")
 async def dnn_reg_run_v2(
     request: Request,
@@ -584,7 +578,7 @@ async def dnn_reg_run_v2(
     test_data_key: str = Query(...),
     label_name: str = Query(default="label"),
     params: Dict[str, Any] = Body(default={}),
-    ):
+):
     # TODO: params schema for docs.
 
     # Save uploaded files
@@ -607,7 +601,7 @@ async def dnn_reg_run_v2(
         test_data_path=str(test_path),
         output_result_path=str(output_path),
         label_name=label_name,
-        **filtered_params
+        **filtered_params,
     )
 
     client.fput_object(bucket_name, output_key, output_path)
@@ -615,6 +609,7 @@ async def dnn_reg_run_v2(
     # TODO: Update and Notify job status after finish.
 
     return FileResponse(output_path, filename="result.csv")
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
