@@ -5,40 +5,129 @@ import { useToast } from 'primevue/usetoast';
 const toast = useToast();
 
 const initialValues = reactive({
-    username: '',
     labelName: 'label',
     svmType: 'C',
+    cValue: 1,
+    nuValue: 0.5,
     advanceOption: false,
     dual: 'auto',
-    loss: '',
+    loss: 'epsilon_insensitive',
     fitIntercept: true,
     interceptScaling: 1.0,
     kernel: 'rbf',
     degree: 3,
-    gamma: '',
+    gamma: 'scale',
     coef0: 0.0,
-    shirnking: true,
+    shrinking: true,
     tol: 1e-3,
+    tolLinear: 1e-4,
     cacheSize: 200,
-    verbose: false,
     maxIter: -1,
-    epsilon: '',
+    maxIterLinear: 1000,
+    randomState: null,
+    epsilon: '0.1',
 });
 
 const resolver = ({ values }) => {
     const errors = {};
 
-    if (!values.username) {
-        errors.username = [{ message: 'Username is required.' }];
+    if (values.svmType !== "C" && values.svmType !== "Nu" && values.svmType !== "Linear") {
+      errors.svmType = [{ message: "svmType must be one of 'C', 'Nu', or 'Linear'." }];
+    }
+
+    if (values.cValue <= 0.0) {
+      errors.cValue = [{ message: "Value of C must be strictly positive." }];
+    }
+
+    if (values.svmType === "Nu" && (values.nuValue <= 0.0 || values.nuValue > 1.0)) {
+      errors.nuValue = [{ message: "Value of nu must be in (0, 1]." }]
+    }
+
+    if (values.dual === "true") {
+      values.dual = true;
+    } else if (values.dual === "false") {
+      values.dual = false;
+    } else if (values.dual !== "auto") {
+      errors.dual = [{ message: "Value of dual must be 'auto', 'true', or 'false'." }];
+    }
+
+    if (values.loss !== "epsilon_insensitive" && values.loss !== "squared_epsilon_insensitive") {
+      errors.loss = [{ message: "Value of loss must be 'epsilon_insensitive' or 'squared_epsilon_insensitive'." }];
+    }
+
+    if (typeof(values.fitIntercept) !== "boolean") {
+      errors.fitIntercept = [{ message: "Value of Fit Intercept must be true or false." }];
+    }
+
+    if (typeof(values.interceptScaling) !== "number") {
+      errors.interceptScaling = [{ message: "Value of Intercept Scaling must be number" }];
+    }
+
+    if (!["rbf", "linear", "poly", "sigmoid", "precomputed"].includes(values.kernel)) {
+      errors.kernel = [{ message: "Value of kernel must be one of 'rbf', 'linear', 'poly', 'sigmoid', or 'precomputed'."}];
+    }
+
+    if (values.degree < 0) {
+      errors.degree = [{ message: "Value of degree must be non-negative." }];
+    }
+
+    if (["auto", "scale"].includes(values.gamma)) {
+      values.gamma = values.gamma;
+    } else {
+      const num = Number(values.gamma);
+      if (Number.isNaN(num)) {
+        errors.gamma = [{ message: "Value of gamma must be 'scale', 'auto' or non-negative number" }];
+      } else if (num < 0) {
+        errors.gamma = [{ message: "Value of gamma must be non-negative." }];
+      } else {
+      values.gamma = num;
+      }
+    }
+
+    if (Number.isNaN(values.coef0)) {
+      errors.coef0 = [{ message: "Value of coef0 must be a number." }];
+    }
+
+    if (typeof(values.shrinking) !== "boolean") {
+      errors.shrinking = [{ message: "Value of shirnking must be true or false." }];
+    }
+
+    if (values.svmType === "Linear" && !Number.isNaN(values.tolLinear)) {
+      values.tol = values.tolLinear;
+    } else if (values.svmType !== "Linear" && Number.isNaN(values.tol)) {
+      errors.tol = [{ message: "Value of tol must be a number." }];
+    } else if (values.svmType === "Linear" && Number.isNaN(values.tolLinear)) {
+      errors.tolLinear = [{ message: "Value of tol must be a number." }];
+    }
+
+    if (!Number.isInteger(values.cacheSize)) {
+      errors.cacheSize = [{ message: "Value of cache size must be an integer." }];
+    }
+
+    if (values.svmType === "Linear" && Number.isInteger(values.maxIterLinear)) {
+      values.maxIter = values.maxIterLinear;
+    } else if (values.svmType !== "Linear" && !Number.isInteger(values.maxIter)) {
+      errors.maxIter = [{ message: "Value of max iter must be an integer." }];
+    } else if (values.svmType === "Linear" && !Number.isInteger(values.maxIterLinear)) {
+      errors.maxIterLinear = [{ message: "Value of max iter must be an integer." }];
+    }
+
+    if (Number.isNaN(values.epsilon)) {
+      errors.epsilon = [{ message: "Value of epsilon must be a number." }];
+    }
+
+    if (values.randomState !== null && !Number.isInteger(values.randomState)) {
+      errors.randomState = [{ message: "Value of randomState must be empty or integer." }];
     }
 
     return {
-        values, // (Optional) Used to pass current form values to submit event.
+        values,
         errors
     };
 };
 
-const onFormSubmit = ({ valid }) => {
+const onFormSubmit = (form) => {
+    const valid = form.valid;
     if (valid) {
         toast.add({
             severity: 'success',
@@ -46,6 +135,8 @@ const onFormSubmit = ({ valid }) => {
             life: 3000
         });
     }
+    console.log(`isValid: ${valid}\n Form: ${JSON.stringify(form.values)}`);
+    console.log(`Error: ${JSON.stringify(form.errors)}`);
 };
 </script>
 
@@ -54,11 +145,6 @@ const onFormSubmit = ({ valid }) => {
         <Toast />
 
         <Form v-slot="$form" :initialValues :resolver @submit="onFormSubmit" :validateOnValueUpdate="true" class="flex flex-col gap-4 w-full sm:w-56">
-            <div class="flex flex-col gap-1">
-                <label for="username" class="font-bold block mb-2"> Username </label>
-                <InputText name="username" type="text" placeholder="Username" fluid />
-                <Message v-if="$form.username?.invalid" severity="error" size="small" variant="simple">{{ $form.username.error?.message }}</Message>
-            </div>
             <div class="flex flex-col gap-1">
                 <label for="labelName" class="font-bold block mb-2"> Label Name </label>
                 <InputText name="labelName" type="text" placeholder="label" fluid />
@@ -81,11 +167,11 @@ const onFormSubmit = ({ valid }) => {
                 </div>
               </RadioButtonGroup>
             </Fieldset>
-            <div v-if="$form?.svmType?.value === 'C'">
+            <div>
               <label for="cValue" class="font-bold block mb-2"> C </label>
               <InputNumber name="cValue" fluid />
             </div>
-            <div v-if="$form?.svmType?.value === 'Nu'">
+            <div v-show="$form?.svmType?.value === 'Nu'">
               <label for="nuValue" class="font-bold block mb-2"> Nu </label>
               <InputNumber name="nuValue" fluid />
             </div>
@@ -96,92 +182,118 @@ const onFormSubmit = ({ valid }) => {
               <ToggleSwitch name="advanceOption" />
             </div>
             <div v-show="$form.advanceOption?.value">
-              <Fieldset legend="Dual">
-                <RadioButtonGroup name="dual" class="flex flex-wrap gap-4">
-                  <div class="flex items-center gap-2">
-                    <RadioButton inputId="auto" value="auto" />
-                    <label for="auto">auto</label>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <RadioButton inputId="true" value="true" />
-                    <label for="true">true</label>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <RadioButton inputId="false" value="false" />
-                    <label for="false">false</label>
-                  </div>
-                </RadioButtonGroup>
-              </Fieldset>
-              <div class="flex flex-col items-center gap-2">
-                <label for="fitIntercept" class="font-bold block mb-2"> Fit Intercept </label>
-                <ToggleSwitch name="fitIntercept" />
+              <div v-show="$form.svmType === 'C'">
+                <div class="flex flex-col items-center gap-2">
+                  <label for="epsilon" class="font-bold block mb-2"> Epsilon </label>
+                  <InputText name="epsilon" fluid />
+                </div>
               </div>
-              <div class="flex flex-col items-center gap-2">
-                <label for="interceptScaling" class="font-bold block mb-2"> Intercept Scaling </label>
-                <InputNumber name="interceptScaling" fluid />
+              <div v-show="$form.svmType?.value !== 'Linear'">
+                <Fieldset legend="Kernel">
+                  <RadioButtonGroup name="kernel" class="flex flex-wrap gap-4">
+                    <div class="flex items-center gap-2">
+                      <RadioButton inputId="linear" value="linear" />
+                      <label for="linear">linear</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <RadioButton inputId="poly" value="poly" />
+                      <label for="poly">polynomial</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <RadioButton inputId="rbf" value="rbf" />
+                      <label for="rbf">rbf</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <RadioButton inputId="sigmoid" value="sigmoid" />
+                      <label for="sigmoid">sigmoid</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <RadioButton inputId="precomputed" value="precomputed" />
+                      <label for="precomputed">precomputed</label>
+                    </div>
+                  </RadioButtonGroup>
+                </Fieldset>
+                <div v-show="$form?.kernel?.value === 'poly'">
+                  <label for="degree" class="font-bold block mb-2"> Degree </label>
+                  <InputNumber name="degree" fluid />
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                  <label for="gamma" class="font-bold block mb-2"> Gamma </label>
+                  <InputText name="gamma" fluid />
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                  <label for="coef0" class="font-bold block mb-2"> coef0 </label>
+                  <InputNumber name="coef0" fluid />
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                  <label for="shrinking" class="font-bold block mb-2"> Shirnking </label>
+                  <ToggleSwitch name="shrinking" />
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                  <label for="cacheSize" class="font-bold block mb-2"> Cache Size </label>
+                  <InputNumber name="cacheSize" fluid />
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                  <label for="maxIter" class="font-bold block mb-2"> Max Iteration </label>
+                  <InputText name="maxIter" fluid />
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                  <label for="tol" class="font-bold block mb-2"> tol </label>
+                  <InputNumber name="tol" fluid />
+                </div>
               </div>
-              <Fieldset legend="Kernel">
-                <RadioButtonGroup name="kernel" class="flex flex-wrap gap-4">
-                  <div class="flex items-center gap-2">
-                    <RadioButton inputId="linear" value="linear" />
-                    <label for="linear">linear</label>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <RadioButton inputId="poly" value="poly" />
-                    <label for="poly">polynomial</label>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <RadioButton inputId="rbf" value="rbf" />
-                    <label for="rbf">rbf</label>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <RadioButton inputId="sigmoid" value="sigmoid" />
-                    <label for="sigmoid">sigmoid</label>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <RadioButton inputId="precomputed" value="precomputed" />
-                    <label for="precomputed">precomputed</label>
-                  </div>
-                </RadioButtonGroup>
-              </Fieldset>
-              <div v-show="$form?.kernel?.value === 'poly'">
-                <label for="degree" class="font-bold block mb-2"> Degree </label>
-                <InputNumber name="degree" fluid />
-              </div>
-              <div class="flex flex-col items-center gap-2">
-                <label for="gamma" class="font-bold block mb-2"> Gamma </label>
-                <InputNumber name="gamma" fluid />
-              </div>
-              <div class="flex flex-col items-center gap-2">
-                <label for="coef0" class="font-bold block mb-2"> coef0 </label>
-                <InputNumber name="coef0" fluid />
-              </div>
-              <div class="flex flex-col items-center gap-2">
-                <label for="shinrking" class="font-bold block mb-2"> Shirnking </label>
-                <ToggleSwitch name="shirnking" />
-              </div>
-              <div class="flex flex-col items-center gap-2">
-                <label for="tol" class="font-bold block mb-2"> tol </label>
-                <InputNumber name="tol"fluid />
-              </div>
-              <div class="flex flex-col items-center gap-2">
-                <label for="cacheSize" class="font-bold block mb-2"> Cache Size </label>
-                <InputNumber name="cacheSize" fluid />
-              </div>
-              <div class="flex flex-col items-center gap-2">
-                <label for="verbose" class="font-bold block mb-2"> Verbose </label>
-                <ToggleSwitch name="verbose" />
-              </div>
-              <div class="flex flex-col items-center gap-2">
-                <label for="maxIter" class="font-bold block mb-2"> Max Iteration </label>
-                <InputText name="maxIter" fluid />
-              </div>
-              <div class="flex flex-col items-center gap-2">
-                <label for="epsilon" class="font-bold block mb-2"> Epsilon </label>
-                <InputText name="epsilon" fluid />
+
+              <div v-show="$form.svmType?.value === 'Linear'">
+                <Fieldset legend="Loss">
+                  <RadioButtonGroup name="loss" class="flex flex-wrap gap-4">
+                    <div class="flex items-center gap-2">
+                      <RadioButton inputId="epsilonInsensitive" value="epsilonInsensitive" />
+                      <label for="epsilonInsensitive">Epsilon Insensitive</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <RadioButton inputId="squaredEpsilonInsensitive" value="squaredEpsilonInsensitive" />
+                      <label for="squaredEpsilonInsensitive">Squared Epsilon Insensitive</label>
+                    </div>
+                  </RadioButtonGroup>
+                </Fieldset>
+                <Fieldset legend="Dual">
+                  <RadioButtonGroup name="dual" class="flex flex-wrap gap-4">
+                    <div class="flex items-center gap-2">
+                      <RadioButton inputId="auto" value="auto" />
+                      <label for="auto">auto</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <RadioButton inputId="true" value="true" />
+                      <label for="true">true</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <RadioButton inputId="false" value="false" />
+                      <label for="false">false</label>
+                    </div>
+                  </RadioButtonGroup>
+                </Fieldset>
+                <div class="flex flex-col items-center gap-2">
+                  <label for="fitIntercept" class="font-bold block mb-2"> Fit Intercept </label>
+                  <ToggleSwitch name="fitIntercept" />
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                  <label for="interceptScaling" class="font-bold block mb-2"> Intercept Scaling </label>
+                  <InputNumber name="interceptScaling" fluid />
+                </div>
+                <div  class="flex flex-col items-center gap-2">
+                  <label for="tolLinear" class="font-bold block mb-2"> tol </label>
+                  <InputNumber name="tolLinear"fluid />
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                  <label for="maxIterLinear" class="font-bold block mb-2"> Max Iteration </label>
+                  <InputText name="maxIterLinear" fluid />
+                </div>
+                <div  class="flex flex-col items-center gap-2">
+                  <label for="randomState" class="font-bold block mb-2"> random state </label>
+                  <InputNumber name="randomState" fluid />
+                </div>
               </div>
             </div>
-
             <Button type="submit" severity="secondary" label="Submit" />
         </Form>
     </div>

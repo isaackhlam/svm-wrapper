@@ -110,6 +110,7 @@ def build_config(
 ) -> Config:
     config = Config()
 
+    # TODO: Bugfix: C take effect when Nu Vector is chosen.
     if C is not None:
         if svm_type == SVMType.Nu:
             logger.warning(f"C specified but NuSVM is chosen. Ignoring C")
