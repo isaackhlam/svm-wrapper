@@ -20,7 +20,7 @@ from src.svm import regression_logic as svm_regression
 from src.utils import setup_logger
 
 client = Minio(
-    "127.0.0.1:9000",
+    "minio:9000",
     access_key="minioadmin",
     secret_key="minioadmin",
     secure=False,

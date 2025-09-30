@@ -8,7 +8,7 @@ from fastapi.responses import StreamingResponse
 from minio import Minio
 
 client = Minio(
-    "127.0.0.1:9000",
+    "minio:9000",
     access_key="minioadmin",
     secret_key="minioadmin",
     secure=False,
