@@ -4,8 +4,10 @@ import { useToast } from 'primevue/usetoast';
 import { submitJobMutation } from './query.ts';
 import { GraphQLClient } from 'graphql-request';
 import { v4 as uuidv4 } from 'uuid';
+import axios from "axios";
 
 const endpoint = import.meta.env.VITE_GRAPHQL_ENDPOINT || "http://localhost:4000/graphql/";
+const fileEndpoint = import.meta.env.VITE_FILE_HANDLER_ENDPOINT || "http://localhost:8000/";
 const client = new GraphQLClient(endpoint);
 
 const toast = useToast();
@@ -149,6 +151,42 @@ const onFormSubmit = async (form) => {
   const data = await client.request(submitJobMutation, { input: {modelType: "SVM", taskType: "REGRESSION", id: jobId, hyperparameters: form.values}});
   console.log(data);
 };
+
+// TODO: I think it could be merge as one function...
+const onTrainFileUpload = async (event) => {
+  console.log(event);
+  const formData = new FormData();
+  formData.append("file", event.files[0]);
+  formData.append("key", `${jobId}/train.csv`);
+
+  try {
+    const res = await axios.post(`${fileEndpoint}upload`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    console.log("Upload success", res.data);
+  } catch (err) {
+    console.error("Upload failed:", err);
+  }
+}
+const onTestFileUpload = async (event) => {
+  console.log(event);
+  const formData = new FormData();
+  formData.append("file", event.files[0]);
+  formData.append("key", `${jobId}/test.csv`);
+
+  try {
+    const res = await axios.post(`${fileEndpoint}upload`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    console.log("Upload success", res.data);
+  } catch (err) {
+    console.error("Upload failed:", err);
+  }
+}
 </script>
 
 <template>
@@ -164,6 +202,26 @@ const onFormSubmit = async (form) => {
                 <label for="labelName" class="font-bold block mb-2"> Label Name </label>
                 <InputText name="labelName" type="text" placeholder="label" fluid />
                 <Message v-if="$form.labelName?.invalid" severity="error" size="small" variant="simple">{{ $form.labelName.error?.message }}</Message>
+            </div>
+            <div>
+              <label for="trainFile" class="font-bold block mb-2"> Train File </label>
+              <FileUpload
+                name="trainFile"
+                :customUpload="true"
+                @uploader="onTrainFileUpload"
+                accept=".csv"
+                :maxFileSize="1_000_000"
+              />
+            </div>
+            <div>
+              <label for="testFile" class="font-bold block mb-2"> Test File </label>
+              <FileUpload
+                name="testFile"
+                :customUpload="true"
+                @uploader="onTestFileUpload"
+                accept=".csv"
+                :maxFileSize="1_000_000"
+              />
             </div>
             <!-- Radio Button Group -->
             <Fieldset legend="Support Vector Type">
