@@ -35,6 +35,9 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
+      postgres:
+        specifier: ^3.4.7
+        version: 3.4.7
     devDependencies:
       '@types/node':
         specifier: ^24.3.0
@@ -661,6 +664,10 @@ packages:
   picomatch@2.3.1:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
     engines: {node: '>=8.6'}
+
+  postgres@3.4.7:
+    resolution: {integrity: sha512-Jtc2612XINuBjIl/QTWsV5UvE8UHuNblcO3vVADSrKsrc6RqGX6lOW1cEo3CM2v0XG4Nat8nI+YM7/f26VxXLw==}
+    engines: {node: '>=12'}
 
   protobufjs@7.5.4:
     resolution: {integrity: sha512-CvexbZtbov6jW2eXAvLukXjXUW1TzFaivC46BpWc/3BpcCysb5Vffu+B3XHMm8lVEuy2Mm4XGex8hBSg1yapPg==}
@@ -1483,6 +1490,8 @@ snapshots:
   path-type@4.0.0: {}
 
   picomatch@2.3.1: {}
+
+  postgres@3.4.7: {}
 
   protobufjs@7.5.4:
     dependencies:

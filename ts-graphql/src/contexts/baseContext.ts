@@ -1,23 +1,16 @@
-import { GlideClient, GlideClusterClient, Logger } from "@valkey/valkey-glide";
+import postgres from 'postgres';
 
-const addresses = [
-  {
-    host: "0.0.0.0",
-    port: 6379,
-  },
-];
+const sql = postgres({
+  host: process.env.DB_HOST ?? "db",   // docker service name
+  port: Number(process.env.DB_PORT ?? 5432),
+  database: process.env.DB_NAME ?? "mydb",
+  username: process.env.DB_USER ?? "user",
+  password: process.env.DB_PASSWORD ?? "password",
+});
 
-const createDriver = async () => (
-  GlideClient.createClient({
-    addresses: addresses,
-    requestTimeout: 500,
-    clientName: "test_standalone_client",
-  })
-)
 
 const baseContext = async () => {
-  const dbClient = await createDriver();
-  return { dbClient };
+  return { sql };
 };
 
 export default baseContext;

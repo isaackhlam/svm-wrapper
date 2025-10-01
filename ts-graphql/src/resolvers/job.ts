@@ -1,15 +1,23 @@
 import axios from 'axios';
 
-const MODEL_TRAINER_ENDPOINT = "http://127.0.0.1:8008";
+const MODEL_TRAINER_ENDPOINT = "http://trainer:8000";
 
-const pingDB = async (_p : any, _a: any, { dbClient }: any) => (
-  dbClient.customCommand(["PING"])
-)
+const pingDB = async (_p : any, _a: any, { sql }: any) => {
+  const res = await sql`SELECT NOW() as now`;
+  return res[0].now;
+}
 
-const trainModel = async (_p: any, a: any, { dbClient }: any) => {
+const trainModel = async (_p: any, a: any, { sql }: any) => {
   const { modelType, taskType, id, hyperparameters } = a.input;
-  const train_data_key = `/${id}/classification_train.csv`;
-  const test_data_key = `/${id}/classification_test.csv`;
+  const [job] = await sql`
+    INSERT INTO jobs (job_id, status)
+    VALUES (${id}, 'PENDING')
+    RETURNING job_id, status
+  `;
+  console.log(job);
+
+  const train_data_key = `/${id}/train.csv`;
+  const test_data_key = `/${id}/test.csv`;
   console.log(a);
   console.log(typeof(taskType));
   let model = "";
@@ -32,8 +40,9 @@ const trainModel = async (_p: any, a: any, { dbClient }: any) => {
     test_data_key
   }});
 
+
   console.log(endpoint);
-  return {id, status: "PENDING"};
+  return {id: job.job_id, status: job.status};
 }
 
 export const Query = {

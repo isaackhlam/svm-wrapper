@@ -322,10 +322,11 @@ async def svm_reg_run_v2(
     # TODO: params schema for docs.
 
     # Save uploaded files
-    train_path = Path(f"tmp_{train_data_key}")
+    train_path = Path(f"{train_data_key}")
+    print(train_path)
     client.fget_object(bucket_name, train_data_key, train_path)
 
-    test_path = Path(f"tmp_{test_data_key}")
+    test_path = Path(f"{test_data_key}")
     client.fget_object(bucket_name, test_data_key, test_path)
 
     output_path = Path("output.csv")
@@ -348,6 +349,11 @@ async def svm_reg_run_v2(
 
     client.fput_object(bucket_name, output_key, output_path)
     # TODO: Update and Notify job status after finish.
+
+    if train_path.exists():
+        train_path.unlink()
+    if test_path.exists():
+        test_path.unlink()
 
     return FileResponse(output_path, filename="result.csv")
 
