@@ -14,12 +14,9 @@ const trainModel = async (_p: any, a: any, { sql }: any) => {
     VALUES (${id}, 'PENDING')
     RETURNING job_id, status
   `;
-  console.log(job);
 
   const train_data_key = `/${id}/train.csv`;
   const test_data_key = `/${id}/test.csv`;
-  console.log(a);
-  console.log(typeof(taskType));
   let model = "";
   let task = "";
   if (modelType == "DNN") {
@@ -40,8 +37,6 @@ const trainModel = async (_p: any, a: any, { sql }: any) => {
     test_data_key
   }});
 
-
-  console.log(endpoint);
   return {id: job.job_id, status: job.status};
 }
 

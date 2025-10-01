@@ -1,10 +1,18 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
 import { useToast } from 'primevue/usetoast';
+import { submitJobMutation } from './query.ts';
+import { GraphQLClient } from 'graphql-request';
+import { v4 as uuidv4 } from 'uuid';
+
+const endpoint = import.meta.env.VITE_GRAPHQL_ENDPOINT || "http://localhost:4000/graphql/";
+const client = new GraphQLClient(endpoint);
 
 const toast = useToast();
+const jobId = uuidv4();
 
 const initialValues = reactive({
+    jobId,
     labelName: 'label',
     svmType: 'C',
     cValue: 1,
@@ -126,7 +134,7 @@ const resolver = ({ values }) => {
     };
 };
 
-const onFormSubmit = (form) => {
+const onFormSubmit = async (form) => {
     const valid = form.valid;
     if (valid) {
         toast.add({
@@ -137,6 +145,9 @@ const onFormSubmit = (form) => {
     }
     console.log(`isValid: ${valid}\n Form: ${JSON.stringify(form.values)}`);
     console.log(`Error: ${JSON.stringify(form.errors)}`);
+    console.log(endpoint);
+  const data = await client.request(submitJobMutation, { input: {modelType: "SVM", taskType: "REGRESSION", id: jobId, hyperparameters: form.values}});
+  console.log(data);
 };
 </script>
 
@@ -145,6 +156,10 @@ const onFormSubmit = (form) => {
         <Toast />
 
         <Form v-slot="$form" :initialValues :resolver @submit="onFormSubmit" :validateOnValueUpdate="true" class="flex flex-col gap-4 w-full sm:w-56">
+            <div class="flex flex-col gap-1">
+                <label for="jobId" class="font-bold block mb-2"> Job ID </label>
+                <InputText name="jobId" type="text" fluid disabled/>
+            </div>
             <div class="flex flex-col gap-1">
                 <label for="labelName" class="font-bold block mb-2"> Label Name </label>
                 <InputText name="labelName" type="text" placeholder="label" fluid />
