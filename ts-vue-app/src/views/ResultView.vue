@@ -62,7 +62,10 @@ const fileEndpoint = import.meta.env.VITE_FILE_HANDLER_ENDPOINT || "http://local
 
 <template>
   <div>
-    <p v-if="jobStatus">This is result page, Your job {{ jobId }} is {{ jobStatus }}</p>
+    <div v-if="jobStatus">
+    <p>This is result page, Your job {{ jobId }} is {{ jobStatus }}</p>
+    <p>You can bookmark this page to check result later.</p>
+    </div>
     <p v-else>Loading job status...</p>
 
     <Button

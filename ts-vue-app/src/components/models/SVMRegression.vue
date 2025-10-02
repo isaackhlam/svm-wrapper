@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
+import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { submitJobMutation } from './query.ts';
 import { GraphQLClient } from 'graphql-request';
@@ -9,6 +10,7 @@ import axios from "axios";
 const endpoint = import.meta.env.VITE_GRAPHQL_ENDPOINT || "http://localhost:4000/graphql/";
 const fileEndpoint = import.meta.env.VITE_FILE_HANDLER_ENDPOINT || "http://localhost:8000/";
 const client = new GraphQLClient(endpoint);
+const router = useRouter();
 
 const toast = useToast();
 const jobId = uuidv4();
@@ -144,12 +146,11 @@ const onFormSubmit = async (form) => {
             summary: 'Form is submitted.',
             life: 3000
         });
+    client.request(submitJobMutation, { input: {modelType: "SVM", taskType: "REGRESSION", id: jobId, hyperparameters: form.values}});
+    router.push(`/result/${jobId}`);
     }
-    console.log(`isValid: ${valid}\n Form: ${JSON.stringify(form.values)}`);
-    console.log(`Error: ${JSON.stringify(form.errors)}`);
-    console.log(endpoint);
-  const data = await client.request(submitJobMutation, { input: {modelType: "SVM", taskType: "REGRESSION", id: jobId, hyperparameters: form.values}});
-  console.log(data);
+    // console.log(`isValid: ${valid}\n Form: ${JSON.stringify(form.values)}`);
+    // console.log(`Error: ${JSON.stringify(form.errors)}`);
 };
 
 // TODO: I think it could be merge as one function...
