@@ -344,19 +344,28 @@ async def svm_reg_run_v2(
     test_data_key: str = Query(...),
     label_name: str = Query(default="label"),
     params: Dict[str, Any] = Body(default={}),
+    conn: Connection = Depends(get_db_connection)
 ):
     # TODO: params schema for docs.
 
+    job_id = train_data_key.split('/')[1]
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
+            ("PROCESSING", job_id)
+        )
+        cur.fetchone()
+
     # Save uploaded files
     train_path = Path(f"{train_data_key}")
-    print(train_path)
     client.fget_object(bucket_name, train_data_key, train_path)
 
     test_path = Path(f"{test_data_key}")
     client.fget_object(bucket_name, test_data_key, test_path)
 
     output_path = Path("output.csv")
-    output_key = f"{train_data_key.split('/')[1]}/output.csv"
+    output_key = f"{job_id}/output.csv"
 
     # TODO: Consider either pass the key and retrived inside or pass file object directly.
     sig = inspect.signature(svm_regression)
@@ -376,10 +385,18 @@ async def svm_reg_run_v2(
     client.fput_object(bucket_name, output_key, output_path)
     # TODO: Update and Notify job status after finish.
 
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
+            ("FINISHED", job_id)
+        )
+        cur.fetchone()
+
     if train_path.exists():
         train_path.unlink()
     if test_path.exists():
         test_path.unlink()
+
 
     return FileResponse(output_path, filename="result.csv")
 
