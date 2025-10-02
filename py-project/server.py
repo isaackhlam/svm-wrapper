@@ -1,10 +1,13 @@
 import inspect
+import os
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, get_args, get_origin
 
 import uvicorn
-from fastapi import Body, FastAPI, File, Form, Query, Request, UploadFile
+from psycopg import Connection
+from psycopg_pool import ConnectionPool
+from fastapi import Body, FastAPI, File, Form, Query, Request, UploadFile, Depends
 from fastapi.responses import FileResponse, HTMLResponse
 from minio import Minio
 from src.dnn import Activation, Config, LearningRate
@@ -26,6 +29,21 @@ client = Minio(
     secure=False,
 )
 bucket_name = "my-bucket"
+
+DB_HOST = os.getenv("DB_HOST", "db")          # docker service name
+DB_PORT = int(os.getenv("DB_PORT", 5432))
+DB_NAME = os.getenv("DB_NAME", "mydb")
+DB_USER = os.getenv("DB_USER", "user")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
+
+pool = ConnectionPool(
+    conninfo=f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+    max_size=10,  # Tune based on your needs
+)
+
+def get_db_connection():
+    with pool.connection() as conn:
+        yield conn
 
 logger = setup_logger("server.log")
 app = FastAPI()
@@ -109,6 +127,14 @@ def home():
     <a href='/dnn/cls/'>DNN Classification</a><br>
     <a href='/dnn/reg/'>DNN Regression</a><br>
     """
+
+
+@app.get("/pg_version")
+def get_pg_version(conn: Connection = Depends(get_db_connection)):
+    with conn.cursor() as cur:
+        cur.execute("SELECT version();")
+        version = cur.fetchone()
+    return {"postgres_version": version[0]}
 
 
 # Repeat the same pattern for svm_cls_logic, dnn
