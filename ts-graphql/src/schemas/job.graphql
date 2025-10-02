@@ -29,11 +29,15 @@ enum TaskType {
   CLASSIFICATION
 }
 
+input JobStatusInput {
+  id: ID!
+}
+
 type Mutation {
   trainModel(input: TrainModelInput): TrainModelPayload
 }
 
 type Query {
   dbconnection: String
-  getJobStatus: ModelStatus
+  getJobStatus(input: JobStatusInput!): ModelStatus
 }

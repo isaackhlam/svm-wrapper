@@ -40,8 +40,24 @@ const trainModel = async (_p: any, a: any, { sql }: any) => {
   return {id: job.job_id, status: job.status};
 }
 
+const getJobStatus = async (_p: any, { input }: any, { sql }: any) => {
+  const { id } = input;
+  const result = await sql`
+    SELECT status
+    FROM jobs
+    WHERE job_id = ${id}
+  `;
+  if (result.length > 0) {
+    const status = result[0].status;
+    return status;
+  } else {
+    throw Error("Job not Found");
+  }
+}
+
 export const Query = {
   dbconnection: pingDB,
+  getJobStatus,
 }
 
 export const Mutation = {
