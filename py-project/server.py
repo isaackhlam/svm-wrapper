@@ -3,6 +3,7 @@ import os
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, get_args, get_origin
+import shutil
 
 import uvicorn
 from psycopg import Connection
@@ -343,6 +344,7 @@ async def svm_reg_run_v2(
     train_data_key: str = Query(...),
     test_data_key: str = Query(...),
     label_name: str = Query(default="label"),
+    do_explain_model: bool = Query(default=False),
     params: Dict[str, Any] = Body(default={}),
     conn: Connection = Depends(get_db_connection)
 ):
@@ -364,8 +366,13 @@ async def svm_reg_run_v2(
     test_path = Path(f"{test_data_key}")
     client.fget_object(bucket_name, test_data_key, test_path)
 
-    output_path = Path("output.csv")
+    os.mkdir(f"./{job_id}")
     output_key = f"{job_id}/output.csv"
+    output_path = Path(output_key)
+    # This part must need a refactor, all coupling tgt and vy difficult to read...
+    shap_key = f"{job_id}/shap.csv"
+    shap_path = Path(output_path.parent / "shap_explanation.csv")
+    
 
     # TODO: Consider either pass the key and retrived inside or pass file object directly.
     sig = inspect.signature(svm_regression)
@@ -379,10 +386,14 @@ async def svm_reg_run_v2(
         test_data_path=str(test_path),
         output_result_path=str(output_path),
         label_name=label_name,
+        do_explain_model=do_explain_model,
+        is_web_server=True,
         **filtered_params,
     )
 
     client.fput_object(bucket_name, output_key, output_path)
+    if do_explain_model:
+        client.fput_object(bucket_name, shap_key, shap_path)
     # TODO: Update and Notify job status after finish.
 
     with conn.cursor() as cur:
@@ -396,9 +407,16 @@ async def svm_reg_run_v2(
         train_path.unlink()
     if test_path.exists():
         test_path.unlink()
+    if output_path.parent.exists():
+        shutil.rmtree(output_path.parent)
+    # if output_path.exists():
+        # output_path.unlink()
+    # if shap_path.exists():
+        # shap_path.unlink()
 
 
-    return FileResponse(output_path, filename="result.csv")
+    # this result could be remove i think...
+    # return FileResponse(output_path, filename="result.csv")
 
 
 # Repeat the same pattern for svm_cls_logic, dnn

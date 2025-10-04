@@ -7,8 +7,11 @@ const pingDB = async (_p : any, _a: any, { sql }: any) => {
   return res[0].now;
 }
 
+
 const trainModel = async (_p: any, a: any, { sql }: any) => {
   const { modelType, taskType, id, hyperparameters } = a.input;
+  // I don't think this is a good idea...
+  const { explainModel } = hyperparameters;
   const [job] = await sql`
     INSERT INTO jobs (job_id, status)
     VALUES (${id}, 'PENDING')
@@ -34,7 +37,8 @@ const trainModel = async (_p: any, a: any, { sql }: any) => {
 
   const resp = await axios.post(endpoint, hyperparameters, {params: {
     train_data_key,
-    test_data_key
+    test_data_key,
+    do_explain_model: explainModel,
   }});
 
   return {id: job.job_id, status: job.status};

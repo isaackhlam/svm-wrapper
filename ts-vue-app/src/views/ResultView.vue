@@ -12,6 +12,7 @@ const fileEndpoint = import.meta.env.VITE_FILE_HANDLER_ENDPOINT || "http://local
 
   const jobStatus = ref<string | null>(null);
   const isDownloading = ref(false);
+  const isSHAPDownloading = ref(false);
 
   // TODO: Separete import for qgl query
   const query = gql`
@@ -57,6 +58,36 @@ const fileEndpoint = import.meta.env.VITE_FILE_HANDLER_ENDPOINT || "http://local
   } finally {
     isDownloading.value = false;
   }
+  };
+
+
+  const downloadSHAPResult = async () => {
+    isSHAPDownloading.value = true;
+
+    try {
+      const response = await axios.get(`${fileEndpoint}download/shap/${jobId}`,
+      {
+        reponseType: 'text',
+      }
+    );
+    const csvText = response.data;
+    const filename = "shap.csv";
+
+    const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error('Download failed:', error);
+    alert('Failed to download the result file.');
+  } finally {
+    isSHAPDownloading.value = false;
+  }
 };
 </script>
 
@@ -68,13 +99,22 @@ const fileEndpoint = import.meta.env.VITE_FILE_HANDLER_ENDPOINT || "http://local
     </div>
     <p v-else>Loading job status...</p>
 
+    <div v-if="jobStatus === 'FINISHED'">
     <Button
-      v-if="jobStatus === 'FINISHED'"
       :label="isDownloading ? 'Downloading...' : 'Download Result'"
       icon="pi pi-download"
       @click="downloadResult"
       class="p-button-success mt-3"
       :disabled="isDownloading"
     />
+      <p> Caution: If you do not enable 'Explain Model', Download SHAP will result in dummy file. </p>
+    <Button
+      :label="isSHAPDownloading ? 'Downloading...' : 'Download SHAP'"
+      icon="pi pi-download"
+      @click="downloadSHAPResult"
+      class="p-button-success mt-3"
+      :disabled="isSHAPDownloading"
+    />
+    </div>
   </div>
 </template>

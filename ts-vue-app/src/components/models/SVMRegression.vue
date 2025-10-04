@@ -18,6 +18,7 @@ const jobId = uuidv4();
 const initialValues = reactive({
     jobId,
     labelName: 'label',
+    explainModel: false,
     svmType: 'C',
     cValue: 1,
     nuValue: 0.5,
@@ -42,6 +43,10 @@ const initialValues = reactive({
 
 const resolver = ({ values }) => {
     const errors = {};
+
+    if (typeof(values.explainModel) !== "boolean") {
+      errors.explainModel = [{ message: "Value of explain model must be true or false." }];
+    }
 
     if (values.svmType !== "C" && values.svmType !== "Nu" && values.svmType !== "Linear") {
       errors.svmType = [{ message: "svmType must be one of 'C', 'Nu', or 'Linear'." }];
@@ -224,6 +229,11 @@ const onTestFileUpload = async (event) => {
                 :maxFileSize="1_000_000"
               />
             </div>
+            <div class="flex flex-col items-center gap-2">
+              <label for="explainModel" class="font-bold block mb-2"> Explain Model (SHAP)</label>
+              <ToggleSwitch name="explainModel" />
+            </div>
+
             <!-- Radio Button Group -->
             <Fieldset legend="Support Vector Type">
               <RadioButtonGroup name="svmType" class="flex flex-wrap gap-4">

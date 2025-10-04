@@ -88,3 +88,27 @@ async def download(key: str):
             "statusCode": 400,
             "body": ex,
         }
+
+
+@app.get("/download/shap/{key}")
+async def download_shap(key: str):
+    filename = f"{key}/shap.csv"
+    try:
+        obj = client.get_object(
+            bucket_name,
+            filename,
+        )
+        stat = client.stat_object(bucket_name, filename)
+        content_type = stat.content_type or "application/octet-stream"
+
+        return StreamingResponse(
+            obj,
+            media_type=content_type,
+            headers={"Content-Disposition": f'attachment; filename="{key}"'},
+        )
+    except Exception as ex:
+        print(traceback.format_exc())
+        return {
+            "statusCode": 400,
+            "body": ex,
+        }
