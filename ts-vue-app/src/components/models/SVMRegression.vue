@@ -362,7 +362,7 @@ const onTestFileUpload = async (event) => {
                   <label for="maxIterLinear" class="font-bold block mb-2"> Max Iteration </label>
                   <InputText name="maxIterLinear" fluid />
                 </div>
-                <div  class="flex flex-col items-center gap-2">
+                <div class="flex flex-col items-center gap-2">
                   <label for="randomState" class="font-bold block mb-2"> random state </label>
                   <InputNumber name="randomState" fluid />
                 </div>
