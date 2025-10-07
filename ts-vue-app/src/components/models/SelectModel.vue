@@ -15,7 +15,7 @@
       <Tabs value="SVM">
         <TabList>
           <Tab value="SVM">SVM</Tab>
-          <Tab value="DNN">DNN</Tab>
+          <Tab value="DNN" disabled>DNN</Tab>
         </TabList>
         <TabPanels>
           <TabPanel value="SVM">

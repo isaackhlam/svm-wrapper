@@ -1,8 +1,17 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
+import { useRouter } from 'vue-router';
+import { submitJobMutation } from './query.ts';
+import { GraphQLClient } from 'graphql-request';
 import { useToast } from 'primevue/usetoast';
 import { v4 as uuidv4 } from 'uuid';
+import axios from "axios";
 
+const endpoint = import.meta.env.VITE_GRAPHQL_ENDPOINT || "http://localhost:4000/graphql/";
+const fileEndpoint = import.meta.env.VITE_FILE_HANDLER_ENDPOINT || "http://localhost:8000/";
+const client = new GraphQLClient(endpoint);
+
+const router = useRouter();
 const toast = useToast();
 const jobId = uuidv4();
 
@@ -11,6 +20,7 @@ const jobId = uuidv4();
 const initialValues = reactive({
     jobId,
     labelName: 'label',
+    explainModel: false,
     svmType: 'C',
     cValue: 1,
     nuValue: 0.5,
@@ -25,7 +35,7 @@ const initialValues = reactive({
     degree: 3,
     gamma: 'scale',
     coef0: 0.0,
-    shirnking: true,
+    shrinking: true,
     probability: false,
     tol: 1e-3,
     tolLinear: 1e-4,
@@ -40,6 +50,10 @@ const initialValues = reactive({
 
 const resolver = ({ values }) => {
     const errors = {};
+
+    if (typeof(values.explainModel) !== "boolean") {
+      errors.explainModel = [{ message: "Value of explain model must be true or false." }];
+    }
 
     if (values.svmType !== "C" && values.svmType !== "Nu" && values.svmType !== "Linear") {
       errors.svmType = [{ message: "svmType must be one of 'C', 'Nu', or 'Linear'." }];
@@ -65,7 +79,7 @@ const resolver = ({ values }) => {
       errors.loss = [{ message: "Value of loss must be 'hinge' or 'squared_hinge'." }];
     }
 
-    if (values.penalty !== "l1" && values.penalty !== "lw") {
+    if (values.penalty !== "l1" && values.penalty !== "l2") {
       errors.penalty = [{ message: "Value of penalty must be 'l1' or 'l2'." }];
     }
 
@@ -115,7 +129,7 @@ const resolver = ({ values }) => {
     }
 
     if (typeof(values.shrinking) !== "boolean") {
-      errors.shrinking = [{ message: "Value of shirnking must be true or false." }];
+      errors.shrinking = [{ message: "Value of shrinking must be true or false." }];
     }
 
     if (typeof(values.probability) !== "boolean") {
@@ -157,17 +171,54 @@ const resolver = ({ values }) => {
     };
 };
 
-const onFormSubmit = ({ valid }) => {
+const onFormSubmit = (form) => {
+    const valid = form.valid;
     if (valid) {
         toast.add({
             severity: 'success',
             summary: 'Form is submitted.',
             life: 3000
         });
+    client.request(submitJobMutation, { input: {modelType: "SVM", taskType: "CLASSIFICATION", id: jobId, hyperparameters: form.values}});
+    router.push(`/result/${jobId}`);
     }
     console.log(`isValid: ${valid}\n Form: ${JSON.stringify(form.values)}`);
     console.log(`Error: ${JSON.stringify(form.errors)}`);
 };
+const onTrainFileUpload = async (event) => {
+  console.log(event);
+  const formData = new FormData();
+  formData.append("file", event.files[0]);
+  formData.append("key", `${jobId}/train.csv`);
+
+  try {
+    const res = await axios.post(`${fileEndpoint}upload`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    console.log("Upload success", res.data);
+  } catch (err) {
+    console.error("Upload failed:", err);
+  }
+}
+const onTestFileUpload = async (event) => {
+  console.log(event);
+  const formData = new FormData();
+  formData.append("file", event.files[0]);
+  formData.append("key", `${jobId}/test.csv`);
+
+  try {
+    const res = await axios.post(`${fileEndpoint}upload`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    console.log("Upload success", res.data);
+  } catch (err) {
+    console.error("Upload failed:", err);
+  }
+}
 </script>
 
 <template>
@@ -204,6 +255,11 @@ const onFormSubmit = ({ valid }) => {
                 :maxFileSize="1_000_000"
               />
             </div>
+            <div class="flex flex-col items-center gap-2">
+              <label for="explainModel" class="font-bold block mb-2"> Explain Model (SHAP)</label>
+              <ToggleSwitch name="explainModel" />
+            </div>
+
             <!-- Radio Button Group -->
             <Fieldset legend="Support Vector Type">
               <RadioButtonGroup name="svmType" class="flex flex-wrap gap-4">
@@ -274,8 +330,8 @@ const onFormSubmit = ({ valid }) => {
                   <InputNumber name="coef0" fluid />
                 </div>
                 <div class="flex flex-col items-center gap-2">
-                  <label for="shinrking" class="font-bold block mb-2"> Shirnking </label>
-                  <ToggleSwitch name="shirnking" />
+                  <label for="shrinking" class="font-bold block mb-2"> Shrinking </label>
+                  <ToggleSwitch name="shrinking" />
                 </div>
                 <div class="flex flex-col items-center gap-2">
                   <label for="probability" class="font-bold block mb-2"> Probability </label>
