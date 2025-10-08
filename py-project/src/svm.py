@@ -3,6 +3,7 @@ import logging
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, Union, get_args, get_origin
+from pathlib import Path
 
 import typer
 from sklearn import svm
@@ -110,6 +111,7 @@ def build_config(
 ) -> Config:
     config = Config()
 
+    # TODO: Bugfix: C take effect when Nu Vector is chosen.
     if C is not None:
         if svm_type == SVMType.Nu:
             logger.warning(f"C specified but NuSVM is chosen. Ignoring C")
@@ -303,6 +305,7 @@ def classification_logic(
     preview_prediction_result: Optional[bool] = False,
     do_explain_model: Optional[bool] = False,
     shap_output_path: Optional[str] = "./shap_values_output.csv",
+    is_web_server: bool = False,
     C: Optional[float] = None,
     nu: Optional[float] = None,
     penalty: Optional[Penalty] = None,
@@ -433,6 +436,8 @@ def classification_logic(
             explainer_type = "linear"
         else:
             explainer_type = "kernel"
+        if is_web_server is True:
+            shap_output_path = str(Path(output_result_path).parent)
         explain_model(
             model,
             train_X,
@@ -442,6 +447,7 @@ def classification_logic(
             explainer_type,
             shap_output_path,
         )
+
 
 
 # typer.option default set to None, Actual default value already set when initialize Config object.
@@ -608,6 +614,7 @@ def regression_logic(
     output_result_path: str,
     svm_type: SVMType,
     shap_output_path: Optional[str] = "./shap_values_output.csv",
+    is_web_server: bool = False,
     preview_prediction_result: Optional[bool] = False,
     label_name: Optional[str] = "label",
     do_explain_model: Optional[bool] = False,
@@ -700,6 +707,7 @@ def regression_logic(
         logger.error(f"Unknown SVM Type, Supported types: {SVMType}")
         raise Exception("Unknown SVM Type")
 
+
     logger.info("Loading training data.")
     train_X, train_y = load_data(train_data_path, label_name)
     logger.info("Training model.")
@@ -724,6 +732,9 @@ def regression_logic(
             explainer_type = "linear"
         else:
             explainer_type = "kernel"
+        if is_web_server is True:
+            shap_output_path = str(Path(output_result_path).parent)
+            print("SHAP_PATH: ", shap_output_path)
         explain_model(
             model,
             train_X,

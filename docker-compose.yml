@@ -5,11 +5,12 @@ services:
     container_name: postgres
     restart: always
     environment:
-      POSTGRES_UESR: user
+      POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: mydb
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
   minio:
@@ -33,6 +34,7 @@ services:
       - graphql
     volumes:
       - ./ts-vue-app:/app
+      - vue_node_modules:/app/node_modules
     command: pnpm run dev --host 0.0.0.0
   graphql:
     build: ./ts-graphql
@@ -45,6 +47,7 @@ services:
       - file_handler
     volumes:
       - ./ts-graphql:/app
+      - graphql_node_modules:/app/node_modules
     command: pnpm run dev
   trainer:
     build: ./py-project
@@ -74,3 +77,5 @@ services:
 volumes:
   pgdata: # Intentionally leave empty
   minio_data: # Intentionally leave empty
+  vue_node_modules: # Intentionally leave empty
+  graphql_node_modules: # Intentionally leave empty

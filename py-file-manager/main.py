@@ -3,8 +3,9 @@ import traceback
 import uuid
 from typing import Union
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from minio import Minio
 
 client = Minio(
@@ -25,6 +26,13 @@ else:
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],   # or specify ["POST", "GET"]
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def read_root():
@@ -37,7 +45,7 @@ def read_item(item_id: int, q: Union[str, None] = None):
 
 
 @app.post("/upload")
-async def upload(file: UploadFile = File(...), key: str = str(...)):
+async def upload(file: UploadFile = File(...), key: str = Form(...)):
     try:
         fileobj = io.BytesIO(file.file.read())
         # TODO: Parse file extension with key
@@ -73,6 +81,30 @@ async def download(key: str):
             obj,
             media_type=content_type,
             headers={"Content-Disposition": f'attachment; filename="{key}_output.csv"'},
+        )
+    except Exception as ex:
+        print(traceback.format_exc())
+        return {
+            "statusCode": 400,
+            "body": ex,
+        }
+
+
+@app.get("/download/shap/{key}")
+async def download_shap(key: str):
+    filename = f"{key}/shap.csv"
+    try:
+        obj = client.get_object(
+            bucket_name,
+            filename,
+        )
+        stat = client.stat_object(bucket_name, filename)
+        content_type = stat.content_type or "application/octet-stream"
+
+        return StreamingResponse(
+            obj,
+            media_type=content_type,
+            headers={"Content-Disposition": f'attachment; filename="{key}"'},
         )
     except Exception as ex:
         print(traceback.format_exc())

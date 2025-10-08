@@ -1,8 +1,11 @@
 <script setup lang="ts">
   import SVMClassification from './SVMClassification.vue';
   import SVMRegression from './SVMRegression.vue';
+  import DNNClassification from './DNNClassification.vue';
+  import DNNRegression from './DNNRegression.vue';
   import { ref } from 'vue';
-  const modelMode = ref('regression');
+  const SVMMode = ref('regression');
+  const DNNMode = ref('regression');
 </script>
 
 <template>
@@ -16,28 +19,45 @@
         </TabList>
         <TabPanels>
           <TabPanel value="SVM">
-            <Fieldset legend="Select Model Mode" >
-              <RadioButtonGroup class="flex flex-wrap gap-4">
+            <Fieldset legend="Select Model Mode" class="flex">
+              <div class="flex flex-wrap gap-4">
                 <div class="flex items-center gap-2">
-                  <RadioButton v-model="modelMode" inputId="mode1" value="regression" />
-                  <label for="mode1">Regression</label>
+                  <RadioButton v-model="SVMMode" inputId="svm-mode1" value="regression" />
+                  <label for="svm-mode1">Regression</label>
                 </div>
                 <div class="flex items-center gap-2">
-                  <RadioButton v-model="modelMode" inputId="mode2" value="classification" />
-                  <label for="mode2">Classification</label>
+                  <RadioButton v-model="SVMMode" inputId="svm-mode2" value="classification" />
+                  <label for="svm-mode2">Classification</label>
                 </div>
-              </RadioButtonGroup>
+              </div>
             </Fieldset>
-            <div v-show="modelMode === 'regression'">
+            <div v-show="SVMMode === 'regression'">
               <SVMRegression />
             </div>
-            <div v-show="modelMode === 'classification'">
-              <SVMRegression />
+            <div v-show="SVMMode === 'classification'">
+              <SVMClassification />
             </div>
           </TabPanel>
           <TabPanel value="DNN">
             <!-- Temp check, CLS vs REG will be in second menu. And Card should be used in this component -->
-            <SVMClassification />
+            <Fieldset legend="Select Model Mode" class="flex">
+              <div class="flex flex-wrap gap-4">
+                <div class="flex items-center gap-2">
+                  <RadioButton v-model="DNNMode" inputId="dnn-mode1" value="regression" />
+                  <label for="dnn-mode1">Regression</label>
+                </div>
+                <div class="flex items-center gap-2">
+                  <RadioButton v-model="DNNMode" inputId="dnn-mode2" value="classification" />
+                  <label for="dnn-mode2">Classification</label>
+                </div>
+              </div>
+            </Fieldset>
+            <div v-show="DNNMode === 'regression'">
+              <DNNRegression />
+            </div>
+            <div v-show="DNNMode === 'classification'">
+              <DNNClassification />
+            </div>
           </TabPanel>
         </TabPanels>
       </Tabs>

@@ -1,10 +1,14 @@
 import inspect
+import os
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, get_args, get_origin
+import shutil
 
 import uvicorn
-from fastapi import Body, FastAPI, File, Form, Query, Request, UploadFile
+from psycopg import Connection
+from psycopg_pool import ConnectionPool
+from fastapi import Body, FastAPI, File, Form, Query, Request, UploadFile, Depends
 from fastapi.responses import FileResponse, HTMLResponse
 from minio import Minio
 from src.dnn import Activation, Config, LearningRate
@@ -26,6 +30,21 @@ client = Minio(
     secure=False,
 )
 bucket_name = "my-bucket"
+
+DB_HOST = os.getenv("DB_HOST", "db")          # docker service name
+DB_PORT = int(os.getenv("DB_PORT", 5432))
+DB_NAME = os.getenv("DB_NAME", "mydb")
+DB_USER = os.getenv("DB_USER", "user")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
+
+pool = ConnectionPool(
+    conninfo=f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+    max_size=10,  # Tune based on your needs
+)
+
+def get_db_connection():
+    with pool.connection() as conn:
+        yield conn
 
 logger = setup_logger("server.log")
 app = FastAPI()
@@ -109,6 +128,14 @@ def home():
     <a href='/dnn/cls/'>DNN Classification</a><br>
     <a href='/dnn/reg/'>DNN Regression</a><br>
     """
+
+
+@app.get("/pg_version")
+def get_pg_version(conn: Connection = Depends(get_db_connection)):
+    with conn.cursor() as cur:
+        cur.execute("SELECT version();")
+        version = cur.fetchone()
+    return {"postgres_version": version[0]}
 
 
 # Repeat the same pattern for svm_cls_logic, dnn
@@ -203,19 +230,35 @@ async def svm_cls_run_v2(
     train_data_key: str = Query(...),
     test_data_key: str = Query(...),
     label_name: str = Query(default="label"),
+    do_explain_model: bool = Query(default=False),
     params: Dict[str, Any] = Body(default={}),
+    conn: Connection = Depends(get_db_connection)
 ):
     # TODO: params schema for docs.
 
+    job_id = train_data_key.split('/')[1]
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
+            ("PROCESSING", job_id)
+        )
+        cur.fetchone()
+
     # Save uploaded files
-    train_path = Path(f"tmp_{train_data_key}")
+    train_path = Path(f"{train_data_key}")
     client.fget_object(bucket_name, train_data_key, train_path)
 
-    test_path = Path(f"tmp_{test_data_key}")
+    test_path = Path(f"{test_data_key}")
     client.fget_object(bucket_name, test_data_key, test_path)
 
-    output_path = Path("output.csv")
-    output_key = f"{train_data_key.split('/')[1]}/output.csv"
+    os.mkdir(f"./{job_id}")
+    output_key = f"{job_id}/output.csv"
+    output_path = Path(output_key)
+    # This part must need a refactor, all coupling tgt and vy difficult to read...
+    shap_key = f"{job_id}/shap.csv"
+    shap_path = Path(output_path.parent / "shap_explanation.csv")
+
 
     # TODO: Consider either pass the key and retrived inside or pass file object directly.
     sig = inspect.signature(svm_classification)
@@ -229,13 +272,37 @@ async def svm_cls_run_v2(
         test_data_path=str(test_path),
         output_result_path=str(output_path),
         label_name=label_name,
+        do_explain_model=do_explain_model,
+        is_web_server=True,
         **filtered_params,
     )
 
     # TODO: Update and Notify job status after finish.
     client.fput_object(bucket_name, output_key, output_path)
+    if do_explain_model:
+        client.fput_object(bucket_name, shap_key, shap_path)
 
-    return FileResponse(output_path, filename="result.csv")
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
+            ("FINISHED", job_id)
+        )
+        cur.fetchone()
+
+    if train_path.exists():
+        train_path.unlink()
+    if test_path.exists():
+        test_path.unlink()
+    if output_path.parent.exists():
+        shutil.rmtree(output_path.parent)
+    # if output_path.exists():
+        # output_path.unlink()
+    # if shap_path.exists():
+        # shap_path.unlink()
+
+
+    # this result could be remove i think...
+    # return FileResponse(output_path, filename="result.csv")
 
 
 @app.get("/svm/reg/", response_class=HTMLResponse)
@@ -317,19 +384,35 @@ async def svm_reg_run_v2(
     train_data_key: str = Query(...),
     test_data_key: str = Query(...),
     label_name: str = Query(default="label"),
+    do_explain_model: bool = Query(default=False),
     params: Dict[str, Any] = Body(default={}),
+    conn: Connection = Depends(get_db_connection)
 ):
     # TODO: params schema for docs.
 
+    job_id = train_data_key.split('/')[1]
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
+            ("PROCESSING", job_id)
+        )
+        cur.fetchone()
+
     # Save uploaded files
-    train_path = Path(f"tmp_{train_data_key}")
+    train_path = Path(f"{train_data_key}")
     client.fget_object(bucket_name, train_data_key, train_path)
 
-    test_path = Path(f"tmp_{test_data_key}")
+    test_path = Path(f"{test_data_key}")
     client.fget_object(bucket_name, test_data_key, test_path)
 
-    output_path = Path("output.csv")
-    output_key = f"{train_data_key.split('/')[1]}/output.csv"
+    os.mkdir(f"./{job_id}")
+    output_key = f"{job_id}/output.csv"
+    output_path = Path(output_key)
+    # This part must need a refactor, all coupling tgt and vy difficult to read...
+    shap_key = f"{job_id}/shap.csv"
+    shap_path = Path(output_path.parent / "shap_explanation.csv")
+    
 
     # TODO: Consider either pass the key and retrived inside or pass file object directly.
     sig = inspect.signature(svm_regression)
@@ -343,13 +426,37 @@ async def svm_reg_run_v2(
         test_data_path=str(test_path),
         output_result_path=str(output_path),
         label_name=label_name,
+        do_explain_model=do_explain_model,
+        is_web_server=True,
         **filtered_params,
     )
 
     client.fput_object(bucket_name, output_key, output_path)
+    if do_explain_model:
+        client.fput_object(bucket_name, shap_key, shap_path)
     # TODO: Update and Notify job status after finish.
 
-    return FileResponse(output_path, filename="result.csv")
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
+            ("FINISHED", job_id)
+        )
+        cur.fetchone()
+
+    if train_path.exists():
+        train_path.unlink()
+    if test_path.exists():
+        test_path.unlink()
+    if output_path.parent.exists():
+        shutil.rmtree(output_path.parent)
+    # if output_path.exists():
+        # output_path.unlink()
+    # if shap_path.exists():
+        # shap_path.unlink()
+
+
+    # this result could be remove i think...
+    # return FileResponse(output_path, filename="result.csv")
 
 
 # Repeat the same pattern for svm_cls_logic, dnn
@@ -447,19 +554,34 @@ async def dnn_cls_run_v2(
     train_data_key: str = Query(...),
     test_data_key: str = Query(...),
     label_name: str = Query(default="label"),
+    do_explain_model: bool = Query(default=False),
     params: Dict[str, Any] = Body(default={}),
+    conn: Connection = Depends(get_db_connection)
 ):
     # TODO: params schema for docs.
 
+    job_id = train_data_key.split('/')[1]
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
+            ("PROCESSING", job_id)
+        )
+        cur.fetchone()
+
     # Save uploaded files
-    train_path = Path(f"tmp_{train_data_key}")
+    train_path = Path(f"{train_data_key}")
     client.fget_object(bucket_name, train_data_key, train_path)
 
-    test_path = Path(f"tmp_{test_data_key}")
+    test_path = Path(f"{test_data_key}")
     client.fget_object(bucket_name, test_data_key, test_path)
 
-    output_path = Path("output.csv")
-    output_key = f"{train_data_key.split('/')[1]}/output.csv"
+    os.mkdir(f"./{job_id}")
+    output_key = f"{job_id}/output.csv"
+    output_path = Path(output_key)
+    # This part must need a refactor, all coupling tgt and vy difficult to read...
+    shap_key = f"{job_id}/shap.csv"
+    shap_path = Path(output_path.parent / "shap_explanation.csv")
 
     # TODO: Consider either pass the key and retrived inside or pass file object directly.
     sig = inspect.signature(dnn_classification)
@@ -471,13 +593,37 @@ async def dnn_cls_run_v2(
         test_data_path=str(test_path),
         output_result_path=str(output_path),
         label_name=label_name,
+        do_explain_model=do_explain_model,
+        is_web_server=True,
         **filtered_params,
     )
 
     client.fput_object(bucket_name, output_key, output_path)
+    if do_explain_model:
+        client.fput_object(bucket_name, shap_key, shap_path)
     # TODO: Update and Notify job status after finish.
 
-    return FileResponse(output_path, filename="result.csv")
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
+            ("FINISHED", job_id)
+        )
+        cur.fetchone()
+
+    if train_path.exists():
+        train_path.unlink()
+    if test_path.exists():
+        test_path.unlink()
+    if output_path.parent.exists():
+        shutil.rmtree(output_path.parent)
+    # if output_path.exists():
+        # output_path.unlink()
+    # if shap_path.exists():
+        # shap_path.unlink()
+
+    # this result could be remove i think...
+    # return FileResponse(output_path, filename="result.csv")
 
 
 # Repeat the same pattern for svm_cls_logic, dnn
@@ -577,19 +723,34 @@ async def dnn_reg_run_v2(
     train_data_key: str = Query(...),
     test_data_key: str = Query(...),
     label_name: str = Query(default="label"),
+    do_explain_model: bool = Query(default=False),
     params: Dict[str, Any] = Body(default={}),
+    conn: Connection = Depends(get_db_connection)
 ):
     # TODO: params schema for docs.
 
+    job_id = train_data_key.split('/')[1]
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
+            ("PROCESSING", job_id)
+        )
+        cur.fetchone()
+
     # Save uploaded files
-    train_path = Path(f"tmp_{train_data_key}")
+    train_path = Path(f"{train_data_key}")
     client.fget_object(bucket_name, train_data_key, train_path)
 
-    test_path = Path(f"tmp_{test_data_key}")
+    test_path = Path(f"{test_data_key}")
     client.fget_object(bucket_name, test_data_key, test_path)
 
-    output_key = f"{train_data_key.split('/')[1]}/output.csv"
-    output_path = Path("output.csv")
+    os.mkdir(f"./{job_id}")
+    output_key = f"{job_id}/output.csv"
+    output_path = Path(output_key)
+    # This part must need a refactor, all coupling tgt and vy difficult to read...
+    shap_key = f"{job_id}/shap.csv"
+    shap_path = Path(output_path.parent / "shap_explanation.csv")
 
     # TODO: Consider either pass the key and retrived inside or pass file object directly.
     sig = inspect.signature(dnn_regression)
@@ -601,14 +762,37 @@ async def dnn_reg_run_v2(
         test_data_path=str(test_path),
         output_result_path=str(output_path),
         label_name=label_name,
+        do_explain_model=do_explain_model,
+        is_web_server=True,
         **filtered_params,
     )
 
-    client.fput_object(bucket_name, output_key, output_path)
-
     # TODO: Update and Notify job status after finish.
+    client.fput_object(bucket_name, output_key, output_path)
+    if do_explain_model:
+        client.fput_object(bucket_name, shap_key, shap_path)
 
-    return FileResponse(output_path, filename="result.csv")
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
+            ("FINISHED", job_id)
+        )
+        cur.fetchone()
+
+    if train_path.exists():
+        train_path.unlink()
+    if test_path.exists():
+        test_path.unlink()
+    if output_path.parent.exists():
+        shutil.rmtree(output_path.parent)
+    # if output_path.exists():
+        # output_path.unlink()
+    # if shap_path.exists():
+        # shap_path.unlink()
+
+
+    # this result could be remove i think...
+    # return FileResponse(output_path, filename="result.csv")
 
 
 if __name__ == "__main__":

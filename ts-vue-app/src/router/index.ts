@@ -18,6 +18,12 @@ const router = createRouter({
       component: () => import('../views/AboutView.vue')
     },
     {
+      path: '/result/:jobId',
+      name: 'result',
+      meta: { layout: MainLayout },
+      component: () => import('../views/ResultView.vue')
+    },
+    {
       path: '/:pathMatch(.*)*',   // 👈 catch all unmatched routes
       name: '404',
       component: () => import('../views/NotFoundView.vue')
