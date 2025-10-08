@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, Union
+from pathlib import Path
 
 import typer
 from sklearn import neural_network
@@ -197,6 +198,7 @@ def classification_logic(
     test_data_path: str,
     output_result_path: str,
     shap_output_path: Optional[str] = "./shap_values_output.csv",
+    is_web_server: bool = False,
     preview_prediction_result: Optional[bool] = False,
     label_name: Optional[str] = "label",
     do_explain_model: Optional[bool] = False,
@@ -296,6 +298,8 @@ def classification_logic(
         print(test_pred)
 
     if do_explain_model is True:
+        if is_web_server is True:
+            shap_output_path = str(Path(output_result_path).parent)
         explain_model(
             model,
             train_X,

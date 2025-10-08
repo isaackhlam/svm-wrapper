@@ -1,8 +1,17 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
+import { useRouter } from 'vue-router';
+import { submitJobMutation } from './query.ts';
+import { GraphQLClient } from 'graphql-request';
 import { useToast } from 'primevue/usetoast';
 import { v4 as uuidv4 } from 'uuid';
+import axios from "axios";
 
+const endpoint = import.meta.env.VITE_GRAPHQL_ENDPOINT || "http://localhost:4000/graphql/";
+const fileEndpoint = import.meta.env.VITE_FILE_HANDLER_ENDPOINT || "http://localhost:8000/";
+const client = new GraphQLClient(endpoint);
+
+const router = useRouter();
 const toast = useToast();
 const jobId = uuidv4();
 
@@ -138,15 +147,56 @@ const resolver = ({ values }) => {
     };
 };
 
-const onFormSubmit = ({ valid }) => {
+const onFormSubmit = (form) => {
+    const valid = form.valid;
     if (valid) {
         toast.add({
             severity: 'success',
             summary: 'Form is submitted.',
             life: 3000
         });
+    client.request(submitJobMutation, { input: {modelType: "DNN", taskType: "CLASSIFICATION", id: jobId, hyperparameters: form.values}});
+    router.push(`/result/${jobId}`);
     }
+    console.log(`isValid: ${valid}\n Form: ${JSON.stringify(form.values)}`);
+    console.log(`Error: ${JSON.stringify(form.errors)}`);
 };
+
+const onTrainFileUpload = async (event) => {
+  console.log(event);
+  const formData = new FormData();
+  formData.append("file", event.files[0]);
+  formData.append("key", `${jobId}/train.csv`);
+
+  try {
+    const res = await axios.post(`${fileEndpoint}upload`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    console.log("Upload success", res.data);
+  } catch (err) {
+    console.error("Upload failed:", err);
+  }
+}
+
+const onTestFileUpload = async (event) => {
+  console.log(event);
+  const formData = new FormData();
+  formData.append("file", event.files[0]);
+  formData.append("key", `${jobId}/test.csv`);
+
+  try {
+    const res = await axios.post(`${fileEndpoint}upload`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    console.log("Upload success", res.data);
+  } catch (err) {
+    console.error("Upload failed:", err);
+  }
+}
 </script>
 
 <template>
@@ -182,6 +232,10 @@ const onFormSubmit = ({ valid }) => {
                 accept=".csv"
                 :maxFileSize="1_000_000"
               />
+            </div>
+            <div class="flex flex-col items-center gap-2">
+              <label for="explainModel" class="font-bold block mb-2"> Explain Model (SHAP)</label>
+              <ToggleSwitch name="explainModel" />
             </div>
             <!-- Advance Option -->
             <div class="flex flex-col items-center gap-2">
