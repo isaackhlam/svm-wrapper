@@ -27,7 +27,7 @@ const initialValues = reactive({
     batchSize: 'auto',
     learningRate: 'constant',
     learningRateInit: 0.001,
-    shuffle: false,
+    shuffle: true,
     powerT: 0.5,
     maxIter: 200,
     randomState: null,
@@ -47,6 +47,10 @@ const initialValues = reactive({
 
 const resolver = ({ values }) => {
     const errors = {};
+
+    if (typeof(values.explainModel) !== "boolean") {
+      errors.explainModel = [{ message: "Value of explain model must be true or false." }];
+    }
 
     // Validate on hiddenLayerSizes
 

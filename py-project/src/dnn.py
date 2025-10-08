@@ -477,6 +477,7 @@ def regression_logic(
     output_result_path: str,
     shap_output_path: Optional[str] = "./shap_values_output.csv",
     preview_prediction_result: Optional = False,
+    is_web_server: bool = False,
     label_name: Optional[str] = "label",
     do_explain_model: Optional[bool] = False,
     loss: Optional[Loss] = None,
@@ -577,6 +578,8 @@ def regression_logic(
         print(test_pred)
 
     if do_explain_model is True:
+        if is_web_server is True:
+            shap_output_path = str(Path(output_result_path).parent)
         explain_model(
             model,
             train_X,
