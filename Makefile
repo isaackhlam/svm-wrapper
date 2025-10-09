@@ -1,7 +1,7 @@
 install:
 	git config core.hooksPath .githooks
 	git submodule update --init --recursive --remote --force
-	pip install -r requirement.txt
+	pip install -r requirements.txt
 	pnpm install
 
 lint/quick:
