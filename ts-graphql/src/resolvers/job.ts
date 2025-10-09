@@ -1,3 +1,5 @@
+// TODO: fix type hint
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
 
 const MODEL_TRAINER_ENDPOINT = 'http://trainer:8000';
@@ -41,6 +43,8 @@ const trainModel = async (_p: any, a: any, { sql }: any) => {
       do_explain_model: explainModel,
     },
   });
+
+  console.log(resp);
 
   return { id: job.job_id, status: job.status };
 };

@@ -112,7 +112,7 @@ const resolver = ({ values }) => {
     }
 
     if (["auto", "scale"].includes(values.gamma)) {
-      values.gamma = values.gamma;
+      // values.gamma = values.gamma;
     } else {
       const num = Number(values.gamma);
       if (Number.isNaN(num)) {

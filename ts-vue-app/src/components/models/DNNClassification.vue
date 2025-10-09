@@ -121,7 +121,7 @@ const resolver = ({ values }) => {
     }
 
     if (values.validationFraction < 0.0 || values.validationFraction > 1.0) {
-      erros.validationFraction = [{ message: "Value of validation fraction must be between 0 and 1." }]
+      errors.validationFraction = [{ message: "Value of validation fraction must be between 0 and 1." }]
     }
 
     if (values.beta1 < 0.0 || values.beta1 >= 1.0) {
