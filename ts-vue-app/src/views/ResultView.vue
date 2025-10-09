@@ -94,27 +94,29 @@ const fileEndpoint = import.meta.env.VITE_FILE_HANDLER_ENDPOINT || "http://local
 <template>
   <div>
     <div v-if="jobStatus">
-    <p>This is result page, Your job {{ jobId }} is {{ jobStatus }}</p>
-    <p>You can bookmark this page to check result later.</p>
+      <p>This is result page, Your job {{ jobId }} is {{ jobStatus }}</p>
+      <p>You can bookmark this page to check result later.</p>
     </div>
-    <p v-else>Loading job status...</p>
+    <p v-else>
+      Loading job status...
+    </p>
 
     <div v-if="jobStatus === 'FINISHED'">
-    <Button
-      :label="isDownloading ? 'Downloading...' : 'Download Result'"
-      icon="pi pi-download"
-      @click="downloadResult"
-      class="p-button-success mt-3"
-      :disabled="isDownloading"
-    />
+      <Button
+        :label="isDownloading ? 'Downloading...' : 'Download Result'"
+        icon="pi pi-download"
+        class="p-button-success mt-3"
+        :disabled="isDownloading"
+        @click="downloadResult"
+      />
       <p> Caution: If you do not enable 'Explain Model', Download SHAP will result in dummy file. </p>
-    <Button
-      :label="isSHAPDownloading ? 'Downloading...' : 'Download SHAP'"
-      icon="pi pi-download"
-      @click="downloadSHAPResult"
-      class="p-button-success mt-3"
-      :disabled="isSHAPDownloading"
-    />
+      <Button
+        :label="isSHAPDownloading ? 'Downloading...' : 'Download SHAP'"
+        icon="pi pi-download"
+        class="p-button-success mt-3"
+        :disabled="isSHAPDownloading"
+        @click="downloadSHAPResult"
+      />
     </div>
   </div>
 </template>

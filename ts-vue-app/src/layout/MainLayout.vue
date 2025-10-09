@@ -4,7 +4,7 @@
 
 <template>
   <div>
-    <NavBar class=navbar />
+    <NavBar class="navbar" />
     <slot />
   </div>
 </template>
