@@ -12,6 +12,7 @@ format/quick:
 	git ls-files --exclude-standard -s '*.py' | awk '{print $$4}' | xargs -I {} black {}
 	git ls-files --exclude-standard -s '*.py' | awk '{print $$4}' | xargs -I {} isort {}
 	git ls-files --exclude-standard -s '*.yml' '*.yaml' | awk '{print $$4}' | xargs -t -I {} yq -i -S -Y . {}
+	git ls-files --exclude-standard -s '*.ts' | awk '{print $$4}' | pnpm format
 
 lint:
 	for i in $$(ls -d py-*/); do flake8 $$i; bandit -r $$i; done
@@ -19,3 +20,5 @@ lint:
 
 format:
 	for i in $$(ls -d py-*/); do python -m black $$i; isort $$i; done
+	for i in $$(ls -d ts-*/); do pnpm format; done
+	git ls-files --exclude-standard -s '*.yml' '*.yaml' | awk '{print $$4}' | xargs -t -I {} yq -i -S -Y . {}

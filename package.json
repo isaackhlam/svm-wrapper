@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "main": "index.js",
   "scripts": {
+    "format": "prettier --write \"./**/*.{js,ts,css,json}\" --config ./.prettierrc"
   },
   "keywords": [],
   "author": "CommitSudoku",
