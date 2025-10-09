@@ -1,6 +1,14 @@
 {
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
+
+    "esModuleInterop": true,
+    "exactOptionalPropertyTypes": true,
+
+    "isolatedModules": true,
+    "jsx": "react-jsx",
     // File Layout
     // "rootDir": "./src",
     // "outDir": "./dist",
@@ -8,8 +16,11 @@
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "commonjs",
-    "target": "es2020",
-    "types": ["node"],
+    "moduleDetection": "force",
+    // Stricter Typechecking Options
+    "noUncheckedIndexedAccess": true,
+    "noUncheckedSideEffectImports": true,
+    "skipLibCheck": true,
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
@@ -17,13 +28,6 @@
 
     // Other Outputs
     "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-
-    // Stricter Typechecking Options
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-
     // Style Options
     // "noImplicitReturns": true,
     // "noImplicitOverride": true,
@@ -34,11 +38,7 @@
 
     // Recommended Options
     "strict": true,
-    "jsx": "react-jsx",
-    "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
-    "moduleDetection": "force",
-    "skipLibCheck": true,
-    "esModuleInterop": true
+    "target": "es2020",
+    "types": ["node"]
   }
 }

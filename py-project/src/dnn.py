@@ -1,8 +1,8 @@
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Union
 from pathlib import Path
+from typing import Optional, Union
 
 import typer
 from sklearn import neural_network

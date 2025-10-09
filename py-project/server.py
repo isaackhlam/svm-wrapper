@@ -1,16 +1,17 @@
 import inspect
 import os
+import shutil
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, get_args, get_origin
-import shutil
 
 import uvicorn
-from psycopg import Connection
-from psycopg_pool import ConnectionPool
-from fastapi import Body, FastAPI, File, Form, Query, Request, UploadFile, Depends
+from fastapi import (Body, Depends, FastAPI, File, Form, Query, Request,
+                     UploadFile)
 from fastapi.responses import FileResponse, HTMLResponse
 from minio import Minio
+from psycopg import Connection
+from psycopg_pool import ConnectionPool
 from src.dnn import Activation, Config, LearningRate
 from src.dnn import Loss as DNNLoss
 from src.dnn import Solver
@@ -31,7 +32,7 @@ client = Minio(
 )
 bucket_name = "my-bucket"
 
-DB_HOST = os.getenv("DB_HOST", "db")          # docker service name
+DB_HOST = os.getenv("DB_HOST", "db")  # docker service name
 DB_PORT = int(os.getenv("DB_PORT", 5432))
 DB_NAME = os.getenv("DB_NAME", "mydb")
 DB_USER = os.getenv("DB_USER", "user")
@@ -42,9 +43,11 @@ pool = ConnectionPool(
     max_size=10,  # Tune based on your needs
 )
 
+
 def get_db_connection():
     with pool.connection() as conn:
         yield conn
+
 
 logger = setup_logger("server.log")
 app = FastAPI()
@@ -232,16 +235,16 @@ async def svm_cls_run_v2(
     label_name: str = Query(default="label"),
     do_explain_model: bool = Query(default=False),
     params: Dict[str, Any] = Body(default={}),
-    conn: Connection = Depends(get_db_connection)
+    conn: Connection = Depends(get_db_connection),
 ):
     # TODO: params schema for docs.
 
-    job_id = train_data_key.split('/')[1]
+    job_id = train_data_key.split("/")[1]
 
     with conn.cursor() as cur:
         cur.execute(
             "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
-            ("PROCESSING", job_id)
+            ("PROCESSING", job_id),
         )
         cur.fetchone()
 
@@ -258,7 +261,6 @@ async def svm_cls_run_v2(
     # This part must need a refactor, all coupling tgt and vy difficult to read...
     shap_key = f"{job_id}/shap.csv"
     shap_path = Path(output_path.parent / "shap_explanation.csv")
-
 
     # TODO: Consider either pass the key and retrived inside or pass file object directly.
     sig = inspect.signature(svm_classification)
@@ -285,7 +287,7 @@ async def svm_cls_run_v2(
     with conn.cursor() as cur:
         cur.execute(
             "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
-            ("FINISHED", job_id)
+            ("FINISHED", job_id),
         )
         cur.fetchone()
 
@@ -296,10 +298,9 @@ async def svm_cls_run_v2(
     if output_path.parent.exists():
         shutil.rmtree(output_path.parent)
     # if output_path.exists():
-        # output_path.unlink()
+    # output_path.unlink()
     # if shap_path.exists():
-        # shap_path.unlink()
-
+    # shap_path.unlink()
 
     # this result could be remove i think...
     # return FileResponse(output_path, filename="result.csv")
@@ -386,16 +387,16 @@ async def svm_reg_run_v2(
     label_name: str = Query(default="label"),
     do_explain_model: bool = Query(default=False),
     params: Dict[str, Any] = Body(default={}),
-    conn: Connection = Depends(get_db_connection)
+    conn: Connection = Depends(get_db_connection),
 ):
     # TODO: params schema for docs.
 
-    job_id = train_data_key.split('/')[1]
+    job_id = train_data_key.split("/")[1]
 
     with conn.cursor() as cur:
         cur.execute(
             "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
-            ("PROCESSING", job_id)
+            ("PROCESSING", job_id),
         )
         cur.fetchone()
 
@@ -412,7 +413,6 @@ async def svm_reg_run_v2(
     # This part must need a refactor, all coupling tgt and vy difficult to read...
     shap_key = f"{job_id}/shap.csv"
     shap_path = Path(output_path.parent / "shap_explanation.csv")
-    
 
     # TODO: Consider either pass the key and retrived inside or pass file object directly.
     sig = inspect.signature(svm_regression)
@@ -439,7 +439,7 @@ async def svm_reg_run_v2(
     with conn.cursor() as cur:
         cur.execute(
             "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
-            ("FINISHED", job_id)
+            ("FINISHED", job_id),
         )
         cur.fetchone()
 
@@ -450,10 +450,9 @@ async def svm_reg_run_v2(
     if output_path.parent.exists():
         shutil.rmtree(output_path.parent)
     # if output_path.exists():
-        # output_path.unlink()
+    # output_path.unlink()
     # if shap_path.exists():
-        # shap_path.unlink()
-
+    # shap_path.unlink()
 
     # this result could be remove i think...
     # return FileResponse(output_path, filename="result.csv")
@@ -556,16 +555,16 @@ async def dnn_cls_run_v2(
     label_name: str = Query(default="label"),
     do_explain_model: bool = Query(default=False),
     params: Dict[str, Any] = Body(default={}),
-    conn: Connection = Depends(get_db_connection)
+    conn: Connection = Depends(get_db_connection),
 ):
     # TODO: params schema for docs.
 
-    job_id = train_data_key.split('/')[1]
+    job_id = train_data_key.split("/")[1]
 
     with conn.cursor() as cur:
         cur.execute(
             "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
-            ("PROCESSING", job_id)
+            ("PROCESSING", job_id),
         )
         cur.fetchone()
 
@@ -603,11 +602,10 @@ async def dnn_cls_run_v2(
         client.fput_object(bucket_name, shap_key, shap_path)
     # TODO: Update and Notify job status after finish.
 
-
     with conn.cursor() as cur:
         cur.execute(
             "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
-            ("FINISHED", job_id)
+            ("FINISHED", job_id),
         )
         cur.fetchone()
 
@@ -618,9 +616,9 @@ async def dnn_cls_run_v2(
     if output_path.parent.exists():
         shutil.rmtree(output_path.parent)
     # if output_path.exists():
-        # output_path.unlink()
+    # output_path.unlink()
     # if shap_path.exists():
-        # shap_path.unlink()
+    # shap_path.unlink()
 
     # this result could be remove i think...
     # return FileResponse(output_path, filename="result.csv")
@@ -725,16 +723,16 @@ async def dnn_reg_run_v2(
     label_name: str = Query(default="label"),
     do_explain_model: bool = Query(default=False),
     params: Dict[str, Any] = Body(default={}),
-    conn: Connection = Depends(get_db_connection)
+    conn: Connection = Depends(get_db_connection),
 ):
     # TODO: params schema for docs.
 
-    job_id = train_data_key.split('/')[1]
+    job_id = train_data_key.split("/")[1]
 
     with conn.cursor() as cur:
         cur.execute(
             "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
-            ("PROCESSING", job_id)
+            ("PROCESSING", job_id),
         )
         cur.fetchone()
 
@@ -775,7 +773,7 @@ async def dnn_reg_run_v2(
     with conn.cursor() as cur:
         cur.execute(
             "UPDATE jobs SET status = %s WHERE job_id = %s RETURNING job_id, status;",
-            ("FINISHED", job_id)
+            ("FINISHED", job_id),
         )
         cur.fetchone()
 
@@ -786,10 +784,9 @@ async def dnn_reg_run_v2(
     if output_path.parent.exists():
         shutil.rmtree(output_path.parent)
     # if output_path.exists():
-        # output_path.unlink()
+    # output_path.unlink()
     # if shap_path.exists():
-        # shap_path.unlink()
-
+    # shap_path.unlink()
 
     # this result could be remove i think...
     # return FileResponse(output_path, filename="result.csv")

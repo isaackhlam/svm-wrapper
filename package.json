@@ -1,13 +1,14 @@
 {
   "name": "svm-wrapper",
   "version": "0.1.0",
+  "keywords": [],
+  "license": "ISC",
+  "author": "CommitSudoku",
   "main": "index.js",
   "scripts": {
     "format": "prettier --write \"./**/*.{js,ts,css,json}\" --config ./.prettierrc"
   },
-  "keywords": [],
-  "author": "CommitSudoku",
-  "license": "ISC",
+  "dependencies": {},
   "devDependencies": {
     "@eslint/css": "^0.12.0",
     "@eslint/js": "^9.37.0",
@@ -17,11 +18,10 @@
     "eslint": "^9.37.0",
     "eslint-plugin-vue": "^10.5.0",
     "globals": "^16.4.0",
+    "jiti": "^2.6.1",
     "prettier": "^3.6.2",
     "prettier-plugin-packagejson": "^2.5.19",
     "prettier-plugin-sort-json": "^4.1.1",
-    "typescript-eslint": "^8.46.0",
-    "jiti": "^2.6.1"
-  },
-  "dependencies": {}
+    "typescript-eslint": "^8.46.0"
+  }
 }

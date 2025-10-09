@@ -1,5 +1,5 @@
-import { createServer } from 'node:http'
-import { createYoga, createSchema } from 'graphql-yoga'
+import { createServer } from 'node:http';
+import { createYoga, createSchema } from 'graphql-yoga';
 
 import typeDefs from './schemas';
 import resolvers from './resolvers';
@@ -14,7 +14,7 @@ const main = async () => {
     context: baseContext,
     cors: {
       origin: '*',
-    }
+    },
   });
   const server = createServer(yoga);
   server.listen(4000, '0.0.0.0', () => {

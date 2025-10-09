@@ -2,8 +2,8 @@ import ast
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Union, get_args, get_origin
 from pathlib import Path
+from typing import Optional, Union, get_args, get_origin
 
 import typer
 from sklearn import svm
@@ -449,7 +449,6 @@ def classification_logic(
         )
 
 
-
 # typer.option default set to None, Actual default value already set when initialize Config object.
 @svm_app.command()
 def classification(
@@ -706,7 +705,6 @@ def regression_logic(
     else:
         logger.error(f"Unknown SVM Type, Supported types: {SVMType}")
         raise Exception("Unknown SVM Type")
-
 
     logger.info("Loading training data.")
     train_X, train_y = load_data(train_data_path, label_name)

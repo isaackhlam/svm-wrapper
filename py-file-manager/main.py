@@ -3,9 +3,9 @@ import traceback
 import uuid
 from typing import Union
 
-from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from minio import Minio
 
 client = Minio(
@@ -30,9 +30,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],  # frontend URL
     allow_credentials=True,
-    allow_methods=["*"],   # or specify ["POST", "GET"]
+    allow_methods=["*"],  # or specify ["POST", "GET"]
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 def read_root():
