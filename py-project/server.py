@@ -6,8 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union, get_args, get_origin
 
 import uvicorn
-from fastapi import (Body, Depends, FastAPI, File, Form, Query, Request,
-                     UploadFile)
+from fastapi import Body, Depends, FastAPI, File, Form, Query, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse
 from minio import Minio
 from psycopg import Connection
@@ -17,10 +16,19 @@ from src.dnn import Loss as DNNLoss
 from src.dnn import Solver
 from src.dnn import classification_logic as dnn_classification
 from src.dnn import regression_logic as dnn_regression
-from src.svm import (DecisionFunctionShape, Kernel, Loss, MultiClass, Penalty,
-                     RegressionLoss, SVMType)
+from src.svm import (
+    DecisionFunctionShape,
+    Kernel,
+    Loss,
+    MultiClass,
+    Penalty,
+    RegressionLoss,
+    SVMType,
+)
 from src.svm import classification_logic as svm_classification
-from src.svm import coerce_value
+from src.svm import (
+    coerce_value,
+)
 from src.svm import regression_logic as svm_regression
 from src.utils import setup_logger
 
