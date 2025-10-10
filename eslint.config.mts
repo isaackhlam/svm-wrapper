@@ -19,7 +19,7 @@ import { defineConfig } from "eslint/config";
 
 export default defineConfig([
   {
-    ignores: ['**/.vite'],
+    ignores: ['**/.vite', '**/megalinter-reports'],
   },
 
   {
