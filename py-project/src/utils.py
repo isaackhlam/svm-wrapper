@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Optional
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import shap
 from colorlog import ColoredFormatter
@@ -97,7 +96,7 @@ def save_shap_value(X_test, y_test, shap_values, save_prefix, multi_class=False)
         result_df = pd.concat(
             [
                 X_test.reset_index(drop=True),
-                pd.DataFrame({"Prediction": pred_y_test}).reset_index(drop=True),
+                pd.DataFrame({"Prediction": y_test}).reset_index(drop=True),
                 shap_all_classes_df.reset_index(drop=True),
             ],
             axis=1,

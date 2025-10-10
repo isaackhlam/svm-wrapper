@@ -1,6 +1,5 @@
 import io
 import traceback
-import uuid
 from typing import Union
 
 from fastapi import FastAPI, File, Form, UploadFile

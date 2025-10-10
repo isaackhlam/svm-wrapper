@@ -270,11 +270,11 @@ async def svm_cls_run_v2(
     shap_key = f"{job_id}/shap.csv"
     shap_path = Path(output_path.parent / "shap_explanation.csv")
 
-    # TODO: Consider either pass the key and retrived inside or pass file object directly.
+    # TODO: Consider either pass the key or pass file object directly.
     sig = inspect.signature(svm_classification)
     accepted_params = set(sig.parameters)
     filtered_params = {k: v for k, v in params.items() if k in accepted_params}
-    if filtered_params.get("svm_type") == None:
+    if filtered_params.get("svm_type") is None:
         filtered_params["svm_type"] = "C"
 
     svm_classification(
@@ -422,11 +422,11 @@ async def svm_reg_run_v2(
     shap_key = f"{job_id}/shap.csv"
     shap_path = Path(output_path.parent / "shap_explanation.csv")
 
-    # TODO: Consider either pass the key and retrived inside or pass file object directly.
+    # TODO: Consider either pass the key or pass file object directly.
     sig = inspect.signature(svm_regression)
     accepted_params = set(sig.parameters)
     filtered_params = {k: v for k, v in params.items() if k in accepted_params}
-    if filtered_params.get("svm_type") == None:
+    if filtered_params.get("svm_type") is None:
         filtered_params["svm_type"] = "C"
 
     svm_regression(
@@ -590,7 +590,7 @@ async def dnn_cls_run_v2(
     shap_key = f"{job_id}/shap.csv"
     shap_path = Path(output_path.parent / "shap_explanation.csv")
 
-    # TODO: Consider either pass the key and retrived inside or pass file object directly.
+    # TODO: Consider either pass the key or pass file object directly.
     sig = inspect.signature(dnn_classification)
     accepted_params = set(sig.parameters)
     filtered_params = {k: v for k, v in params.items() if k in accepted_params}
@@ -758,7 +758,7 @@ async def dnn_reg_run_v2(
     shap_key = f"{job_id}/shap.csv"
     shap_path = Path(output_path.parent / "shap_explanation.csv")
 
-    # TODO: Consider either pass the key and retrived inside or pass file object directly.
+    # TODO: Consider either pass the key or pass file object directly.
     sig = inspect.signature(dnn_regression)
     accepted_params = set(sig.parameters)
     filtered_params = {k: v for k, v in params.items() if k in accepted_params}

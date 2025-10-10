@@ -117,7 +117,8 @@ def build_config(
     if learning_rate_init is not None:
         if config.solver != Solver.sgd and config.solver != Solver.adam:
             logger.warning(
-                "learning_rate_init specified but solver is not 'sgd' or 'adam'. Ignoring learning_rate_init."
+                "learning_rate_init specified but solver is not 'sgd' or 'adam'."
+                "Ignoring learning_rate_init."
             )
         else:
             config.learning_rate_init = learning_rate_init
@@ -147,7 +148,8 @@ def build_config(
             config.nesterovs_momentum = nesterovs_momentum
         else:
             logger.warning(
-                "nesterovs_momentum specified but solver is not sgd, or momentum less than 0. Ignoring nesterovs_momentum"
+                "nesterovs_momentum specified but solver is not sgd,"
+                "or momentum less than 0. Ignoring nesterovs_momentum"
             )
     if early_stopping is not None:
         config.early_stopping = early_stopping
@@ -156,7 +158,8 @@ def build_config(
             config.validation_fraction = validation_fraction
         else:
             logger.warning(
-                "validation_fraction specified but early_stopping is False. Ignoring validation_fraction"
+                "validation_fraction specified but early_stopping is False."
+                "Ignoring validation_fraction"
             )
     if beta_1 is not None:
         if config.solver == Solver.adam:
@@ -178,7 +181,8 @@ def build_config(
     if n_iter_no_change is not None:
         if config.solver != Solver.sgd and config.solver != Solver.adam:
             logger.warning(
-                "n_iter_no_change specified but solver is not 'sgd' or 'adam'. Ignoring n_iter_no_change."
+                "n_iter_no_change specified but solver is not 'sgd' or 'adam'."
+                "Ignoring n_iter_no_change."
             )
         else:
             config.n_iter_no_change = n_iter_no_change
@@ -324,7 +328,10 @@ def classification(
     do_explain_model: bool = False,
     hidden_layer_sizes: Optional[str] = typer.Option(
         None,
-        help="The ith element represents the number of neurons in the ith hidden layer. Default: (100,)",
+        help=(
+            "The ith element represents the number of neurons in the ith hidden layer."
+            "Default: (100,)"
+        ),
         show_default=False,
     ),
     activation: Optional[Activation] = typer.Option(
@@ -383,7 +390,10 @@ def classification(
     ),
     warm_start: Optional[bool] = typer.Option(
         None,
-        help="Whether reuse the solution of the previous call to fit as initialization. Default: False",
+        help=(
+            "Whether reuse the solution of the previous call to fit as initialization."
+            "Default: False"
+        ),
         show_default=False,
     ),
     momentum: Optional[float] = typer.Option(
@@ -398,22 +408,34 @@ def classification(
     ),
     early_stopping: Optional[bool] = typer.Option(
         None,
-        help="Whether to use early stopping to terminate training when validation score is not improving. Default: False",
+        help=(
+            "Whether to use early stopping to terminate training"
+            "when validation score is not improving. Default: False"
+        ),
         show_default=False,
     ),
     validation_fraction: Optional[float] = typer.Option(
         None,
-        help="The proportion of training data to set aside as validation set for early stopping. Default: 0.1",
+        help=(
+            "The proportion of training data to set aside"
+            "as validation set for early stopping. Default: 0.1"
+        ),
         show_default=False,
     ),
     beta_1: Optional[float] = typer.Option(
         None,
-        help="Exponential decay rate for estimates of first moment vector in adam. Default: 0.9",
+        help=(
+            "Exponential decay rate for estimates of first moment vector in adam."
+            "Default: 0.9"
+        ),
         show_default=False,
     ),
     beta_2: Optional[float] = typer.Option(
         None,
-        help="Exponential decay rate for estimates of second moment vector in adam. Default: 0.999",
+        help=(
+            "Exponential decay rate for estimates of second moment vector in adam."
+            "Default: 0.999"
+        ),
         show_default=False,
     ),
     epsilon: Optional[float] = typer.Option(
@@ -428,7 +450,10 @@ def classification(
     ),
     max_fun: Optional[int] = typer.Option(
         None,
-        help="Maximum number of function calls. Only used when solver='lbfgs'. Default: 15000",
+        help=(
+            "Maximum number of function calls."
+            "Only used when solver='lbfgs'. Default: 15000"
+        ),
         show_default=False,
     ),
 ):
@@ -604,12 +629,18 @@ def regression(
     do_explain_model: bool = False,
     loss: Optional[Loss] = typer.Option(
         None,
-        help="The loss function to use when training the weights. Default: squared_error",
+        help=(
+            "The loss function to use when training the weights."
+            "Default: squared_error"
+        ),
         show_default=False,
     ),
     hidden_layer_sizes: Optional[str] = typer.Option(
         None,
-        help="The ith element represents the number of neurons in the ith hidden layer. Default: (100,)",
+        help=(
+            "The ith element represents the number of neurons"
+            "in the ith hidden layer. Default: (100,)"
+        ),
         show_default=False,
     ),
     activation: Optional[Activation] = typer.Option(
@@ -668,7 +699,10 @@ def regression(
     ),
     warm_start: Optional[bool] = typer.Option(
         None,
-        help="Whether reuse the solution of the previous call to fit as initialization. Default: False",
+        help=(
+            "Whether reuse the solution of the previous call"
+            "to fit as initialization. Default: False"
+        ),
         show_default=False,
     ),
     momentum: Optional[float] = typer.Option(
@@ -683,22 +717,34 @@ def regression(
     ),
     early_stopping: Optional[bool] = typer.Option(
         None,
-        help="Whether to use early stopping to terminate training when validation score is not improving. Default: False",
+        help=(
+            "Whether to use early stopping to terminate training"
+            "when validation score is not improving. Default: False"
+        ),
         show_default=False,
     ),
     validation_fraction: Optional[float] = typer.Option(
         None,
-        help="The proportion of training data to set aside as validation set for early stopping. Default: 0.1",
+        help=(
+            "The proportion of training data to set aside"
+            "as validation set for early stopping. Default: 0.1"
+        ),
         show_default=False,
     ),
     beta_1: Optional[float] = typer.Option(
         None,
-        help="Exponential decay rate for estimates of first moment vector in adam. Default: 0.9",
+        help=(
+            "Exponential decay rate for estimates of first moment vector in adam."
+            "Default: 0.9"
+        ),
         show_default=False,
     ),
     beta_2: Optional[float] = typer.Option(
         None,
-        help="Exponential decay rate for estimates of second moment vector in adam. Default: 0.999",
+        help=(
+            "Exponential decay rate for estimates of second moment vector in adam."
+            "Default: 0.999"
+        ),
         show_default=False,
     ),
     epsilon: Optional[float] = typer.Option(
@@ -713,7 +759,10 @@ def regression(
     ),
     max_fun: Optional[int] = typer.Option(
         None,
-        help="Maximum number of function calls. Only used when solver='lbfgs'. Default: 15000",
+        help=(
+            "Maximum number of function calls."
+            "Only used when solver='lbfgs'. Default: 15000"
+        ),
         show_default=False,
     ),
 ):
