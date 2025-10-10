@@ -1,81 +1,81 @@
-version: '3.9'
 services:
   db:
-    image: postgres:18
     container_name: postgres
-    restart: always
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
       POSTGRES_DB: mydb
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: user
+    image: postgres:18
+    ports:
+      - "5432:5432"
+    restart: always
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "5432:5432"
-  minio:
-    image: minio/minio
-    container_name: minio
-    command: server /data --console-address ":9001"
+  file_handler:
+    build: ./py-file-manager
+    command: fastapi dev main.py --host 0.0.0.0
+    container_name: file_handler
+    depends_on:
+      - minio
     environment:
-      MINIO_ROOT_USER: minioadmin
+      - ENV WATCHFILES_FORCE_POLLING=true
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./py-file-manager:/app
+  frontend:
+    build: ./ts-vue-app
+    command: pnpm run dev --host 0.0.0.0
+    container_name: vue_frontend
+    depends_on:
+      - graphql
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./ts-vue-app:/app
+      - vue_node_modules:/app/node_modules
+  graphql:
+    build: ./ts-graphql
+    command: pnpm run dev
+    container_name: graphql_api
+    depends_on:
+      - db
+      - trainer
+      - file_handler
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./ts-graphql:/app
+      - graphql_node_modules:/app/node_modules
+  minio:
+    command: server /data --console-address ":9001"
+    container_name: minio
+    environment:
       MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: minioadmin
+    image: minio/minio
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
       - minio_data:/data
-  frontend:
-    build: ./ts-vue-app
-    container_name: vue_frontend
-    ports:
-      - "5173:5173"
-    depends_on:
-      - graphql
-    volumes:
-      - ./ts-vue-app:/app
-      - vue_node_modules:/app/node_modules
-    command: pnpm run dev --host 0.0.0.0
-  graphql:
-    build: ./ts-graphql
-    container_name: graphql_api
-    ports:
-      - "4000:4000"
-    depends_on:
-      - db
-      - trainer
-      - file_handler
-    volumes:
-      - ./ts-graphql:/app
-      - graphql_node_modules:/app/node_modules
-    command: pnpm run dev
   trainer:
     build: ./py-project
+    command: fastapi dev server.py --host 0.0.0.0
     container_name: trainer
+    depends_on:
+      - db
+      - minio
+    environment:
+      - ENV WATCHFILES_FORCE_POLLING=true
     ports:
       - "8008:8000"
     volumes:
       - ./py-project:/app
-    depends_on:
-      - db
-      - minio
-    environment:
-      - ENV WATCHFILES_FORCE_POLLING=true
-    command: fastapi dev server.py --host 0.0.0.0
-  file_handler:
-    build: ./py-file-manager
-    container_name: file_handler
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./py-file-manager:/app
-    depends_on:
-      - minio
-    environment:
-      - ENV WATCHFILES_FORCE_POLLING=true
-    command: fastapi dev main.py --host 0.0.0.0
+version: '3.9'
 volumes:
-  pgdata: # Intentionally leave empty
-  minio_data: # Intentionally leave empty
-  vue_node_modules: # Intentionally leave empty
-  graphql_node_modules: # Intentionally leave empty
+  graphql_node_modules: null
+  minio_data: null
+  pgdata: null
+  vue_node_modules: null

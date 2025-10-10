@@ -1,5 +1,3 @@
-import sys
-
 import typer
 from src.dnn import dnn_app
 from src.svm import svm_app

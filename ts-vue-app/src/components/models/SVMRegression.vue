@@ -89,7 +89,7 @@ const resolver = ({ values }) => {
     }
 
     if (["auto", "scale"].includes(values.gamma)) {
-      values.gamma = values.gamma;
+      // values.gamma = values.gamma;
     } else {
       const num = Number(values.gamma);
       if (Number.isNaN(num)) {
@@ -196,190 +196,371 @@ const onTestFileUpload = async (event) => {
 </script>
 
 <template>
-    <div class="card flex justify-center">
-        <Toast />
+  <div class="card flex justify-center">
+    <Toast />
 
-        <Form v-slot="$form" :initialValues :resolver @submit="onFormSubmit" :validateOnValueUpdate="true" class="flex flex-col gap-4 w-full sm:w-56">
-            <div class="flex flex-col gap-1">
-                <label for="jobId" class="font-bold block mb-2"> Job ID </label>
-                <InputText name="jobId" type="text" fluid disabled/>
-            </div>
-            <div class="flex flex-col gap-1">
-                <label for="labelName" class="font-bold block mb-2"> Label Name </label>
-                <InputText name="labelName" type="text" placeholder="label" fluid />
-                <Message v-if="$form.labelName?.invalid" severity="error" size="small" variant="simple">{{ $form.labelName.error?.message }}</Message>
-            </div>
-            <div>
-              <label for="trainFile" class="font-bold block mb-2"> Train File </label>
-              <FileUpload
-                name="trainFile"
-                :customUpload="true"
-                @uploader="onTrainFileUpload"
-                accept=".csv"
-                :maxFileSize="1_000_000"
-              />
-            </div>
-            <div>
-              <label for="testFile" class="font-bold block mb-2"> Test File </label>
-              <FileUpload
-                name="testFile"
-                :customUpload="true"
-                @uploader="onTestFileUpload"
-                accept=".csv"
-                :maxFileSize="1_000_000"
-              />
-            </div>
-            <div class="flex flex-col items-center gap-2">
-              <label for="explainModel" class="font-bold block mb-2"> Explain Model (SHAP)</label>
-              <ToggleSwitch name="explainModel" />
-            </div>
+    <Form
+      v-slot="$form"
+      :initial-values
+      :resolver
+      :validate-on-value-update="true"
+      class="flex flex-col gap-4 w-full sm:w-56"
+      @submit="onFormSubmit"
+    >
+      <div class="flex flex-col gap-1">
+        <label
+          for="jobId"
+          class="font-bold block mb-2"
+        > Job ID </label>
+        <InputText
+          name="jobId"
+          type="text"
+          fluid
+          disabled
+        />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label
+          for="labelName"
+          class="font-bold block mb-2"
+        > Label Name </label>
+        <InputText
+          name="labelName"
+          type="text"
+          placeholder="label"
+          fluid
+        />
+        <Message
+          v-if="$form.labelName?.invalid"
+          severity="error"
+          size="small"
+          variant="simple"
+        >
+          {{ $form.labelName.error?.message }}
+        </Message>
+      </div>
+      <div>
+        <label
+          for="trainFile"
+          class="font-bold block mb-2"
+        > Train File </label>
+        <FileUpload
+          name="trainFile"
+          :custom-upload="true"
+          accept=".csv"
+          :max-file-size="1_000_000"
+          @uploader="onTrainFileUpload"
+        />
+      </div>
+      <div>
+        <label
+          for="testFile"
+          class="font-bold block mb-2"
+        > Test File </label>
+        <FileUpload
+          name="testFile"
+          :custom-upload="true"
+          accept=".csv"
+          :max-file-size="1_000_000"
+          @uploader="onTestFileUpload"
+        />
+      </div>
+      <div class="flex flex-col items-center gap-2">
+        <label
+          for="explainModel"
+          class="font-bold block mb-2"
+        > Explain Model (SHAP)</label>
+        <ToggleSwitch name="explainModel" />
+      </div>
 
-            <!-- Radio Button Group -->
-            <Fieldset legend="Support Vector Type">
-              <RadioButtonGroup name="svmType" class="flex flex-wrap gap-4">
-                <div class="flex items-center gap-2">
-                  <RadioButton inputId="c" value="C" />
-                  <label for="c">C</label>
-                </div>
-                <div class="flex items-center gap-2">
-                  <RadioButton inputId="nu" value="Nu" />
-                  <label for="nu">Nu</label>
-                </div>
-                <div class="flex items-center gap-2">
-                  <RadioButton inputId="linear" value="Linear" />
-                  <label for="nu">Linear</label>
-                </div>
-              </RadioButtonGroup>
-            </Fieldset>
-            <div>
-              <label for="cValue" class="font-bold block mb-2"> C </label>
-              <InputNumber name="cValue" fluid />
-            </div>
-            <div v-show="$form?.svmType?.value === 'Nu'">
-              <label for="nuValue" class="font-bold block mb-2"> Nu </label>
-              <InputNumber name="nuValue" fluid />
-            </div>
+      <!-- Radio Button Group -->
+      <Fieldset legend="Support Vector Type">
+        <RadioButtonGroup
+          name="svmType"
+          class="flex flex-wrap gap-4"
+        >
+          <div class="flex items-center gap-2">
+            <RadioButton
+              input-id="c"
+              value="C"
+            />
+            <label for="c">C</label>
+          </div>
+          <div class="flex items-center gap-2">
+            <RadioButton
+              input-id="nu"
+              value="Nu"
+            />
+            <label for="nu">Nu</label>
+          </div>
+          <div class="flex items-center gap-2">
+            <RadioButton
+              input-id="linear"
+              value="Linear"
+            />
+            <label for="nu">Linear</label>
+          </div>
+        </RadioButtonGroup>
+      </Fieldset>
+      <div>
+        <label
+          for="cValue"
+          class="font-bold block mb-2"
+        > C </label>
+        <InputNumber
+          name="cValue"
+          fluid
+        />
+      </div>
+      <div v-show="$form?.svmType?.value === 'Nu'">
+        <label
+          for="nuValue"
+          class="font-bold block mb-2"
+        > Nu </label>
+        <InputNumber
+          name="nuValue"
+          fluid
+        />
+      </div>
 
-            <!-- Advance Option -->
-            <div class="flex flex-col items-center gap-2">
-              <label for="advanceOption" class="font-bold block mb-2"> Advance Option </label>
-              <ToggleSwitch name="advanceOption" />
-            </div>
-            <div v-show="$form.advanceOption?.value">
-              <div v-show="$form.svmType === 'C'">
-                <div class="flex flex-col items-center gap-2">
-                  <label for="epsilon" class="font-bold block mb-2"> Epsilon </label>
-                  <InputText name="epsilon" fluid />
-                </div>
+      <!-- Advance Option -->
+      <div class="flex flex-col items-center gap-2">
+        <label
+          for="advanceOption"
+          class="font-bold block mb-2"
+        > Advance Option </label>
+        <ToggleSwitch name="advanceOption" />
+      </div>
+      <div v-show="$form.advanceOption?.value">
+        <div v-show="$form.svmType === 'C'">
+          <div class="flex flex-col items-center gap-2">
+            <label
+              for="epsilon"
+              class="font-bold block mb-2"
+            > Epsilon </label>
+            <InputText
+              name="epsilon"
+              fluid
+            />
+          </div>
+        </div>
+        <div v-show="$form.svmType?.value !== 'Linear'">
+          <Fieldset legend="Kernel">
+            <RadioButtonGroup
+              name="kernel"
+              class="flex flex-wrap gap-4"
+            >
+              <div class="flex items-center gap-2">
+                <RadioButton
+                  input-id="linear"
+                  value="linear"
+                />
+                <label for="linear">linear</label>
               </div>
-              <div v-show="$form.svmType?.value !== 'Linear'">
-                <Fieldset legend="Kernel">
-                  <RadioButtonGroup name="kernel" class="flex flex-wrap gap-4">
-                    <div class="flex items-center gap-2">
-                      <RadioButton inputId="linear" value="linear" />
-                      <label for="linear">linear</label>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <RadioButton inputId="poly" value="poly" />
-                      <label for="poly">polynomial</label>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <RadioButton inputId="rbf" value="rbf" />
-                      <label for="rbf">rbf</label>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <RadioButton inputId="sigmoid" value="sigmoid" />
-                      <label for="sigmoid">sigmoid</label>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <RadioButton inputId="precomputed" value="precomputed" />
-                      <label for="precomputed">precomputed</label>
-                    </div>
-                  </RadioButtonGroup>
-                </Fieldset>
-                <div v-show="$form?.kernel?.value === 'poly'">
-                  <label for="degree" class="font-bold block mb-2"> Degree </label>
-                  <InputNumber name="degree" fluid />
-                </div>
-                <div class="flex flex-col items-center gap-2">
-                  <label for="gamma" class="font-bold block mb-2"> Gamma </label>
-                  <InputText name="gamma" fluid />
-                </div>
-                <div class="flex flex-col items-center gap-2">
-                  <label for="coef0" class="font-bold block mb-2"> coef0 </label>
-                  <InputNumber name="coef0" fluid />
-                </div>
-                <div class="flex flex-col items-center gap-2">
-                  <label for="shrinking" class="font-bold block mb-2"> Shirnking </label>
-                  <ToggleSwitch name="shrinking" />
-                </div>
-                <div class="flex flex-col items-center gap-2">
-                  <label for="cacheSize" class="font-bold block mb-2"> Cache Size </label>
-                  <InputNumber name="cacheSize" fluid />
-                </div>
-                <div class="flex flex-col items-center gap-2">
-                  <label for="maxIter" class="font-bold block mb-2"> Max Iteration </label>
-                  <InputText name="maxIter" fluid />
-                </div>
-                <div class="flex flex-col items-center gap-2">
-                  <label for="tol" class="font-bold block mb-2"> tol </label>
-                  <InputNumber name="tol" fluid />
-                </div>
+              <div class="flex items-center gap-2">
+                <RadioButton
+                  input-id="poly"
+                  value="poly"
+                />
+                <label for="poly">polynomial</label>
               </div>
+              <div class="flex items-center gap-2">
+                <RadioButton
+                  input-id="rbf"
+                  value="rbf"
+                />
+                <label for="rbf">rbf</label>
+              </div>
+              <div class="flex items-center gap-2">
+                <RadioButton
+                  input-id="sigmoid"
+                  value="sigmoid"
+                />
+                <label for="sigmoid">sigmoid</label>
+              </div>
+              <div class="flex items-center gap-2">
+                <RadioButton
+                  input-id="precomputed"
+                  value="precomputed"
+                />
+                <label for="precomputed">precomputed</label>
+              </div>
+            </RadioButtonGroup>
+          </Fieldset>
+          <div v-show="$form?.kernel?.value === 'poly'">
+            <label
+              for="degree"
+              class="font-bold block mb-2"
+            > Degree </label>
+            <InputNumber
+              name="degree"
+              fluid
+            />
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <label
+              for="gamma"
+              class="font-bold block mb-2"
+            > Gamma </label>
+            <InputText
+              name="gamma"
+              fluid
+            />
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <label
+              for="coef0"
+              class="font-bold block mb-2"
+            > coef0 </label>
+            <InputNumber
+              name="coef0"
+              fluid
+            />
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <label
+              for="shrinking"
+              class="font-bold block mb-2"
+            > Shirnking </label>
+            <ToggleSwitch name="shrinking" />
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <label
+              for="cacheSize"
+              class="font-bold block mb-2"
+            > Cache Size </label>
+            <InputNumber
+              name="cacheSize"
+              fluid
+            />
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <label
+              for="maxIter"
+              class="font-bold block mb-2"
+            > Max Iteration </label>
+            <InputText
+              name="maxIter"
+              fluid
+            />
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <label
+              for="tol"
+              class="font-bold block mb-2"
+            > tol </label>
+            <InputNumber
+              name="tol"
+              fluid
+            />
+          </div>
+        </div>
 
-              <div v-show="$form.svmType?.value === 'Linear'">
-                <Fieldset legend="Loss">
-                  <RadioButtonGroup name="loss" class="flex flex-wrap gap-4">
-                    <div class="flex items-center gap-2">
-                      <RadioButton inputId="epsilonInsensitive" value="epsilonInsensitive" />
-                      <label for="epsilonInsensitive">Epsilon Insensitive</label>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <RadioButton inputId="squaredEpsilonInsensitive" value="squaredEpsilonInsensitive" />
-                      <label for="squaredEpsilonInsensitive">Squared Epsilon Insensitive</label>
-                    </div>
-                  </RadioButtonGroup>
-                </Fieldset>
-                <Fieldset legend="Dual">
-                  <RadioButtonGroup name="dual" class="flex flex-wrap gap-4">
-                    <div class="flex items-center gap-2">
-                      <RadioButton inputId="auto" value="auto" />
-                      <label for="auto">auto</label>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <RadioButton inputId="true" value="true" />
-                      <label for="true">true</label>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <RadioButton inputId="false" value="false" />
-                      <label for="false">false</label>
-                    </div>
-                  </RadioButtonGroup>
-                </Fieldset>
-                <div class="flex flex-col items-center gap-2">
-                  <label for="fitIntercept" class="font-bold block mb-2"> Fit Intercept </label>
-                  <ToggleSwitch name="fitIntercept" />
-                </div>
-                <div class="flex flex-col items-center gap-2">
-                  <label for="interceptScaling" class="font-bold block mb-2"> Intercept Scaling </label>
-                  <InputNumber name="interceptScaling" fluid />
-                </div>
-                <div  class="flex flex-col items-center gap-2">
-                  <label for="tolLinear" class="font-bold block mb-2"> tol </label>
-                  <InputNumber name="tolLinear"fluid />
-                </div>
-                <div class="flex flex-col items-center gap-2">
-                  <label for="maxIterLinear" class="font-bold block mb-2"> Max Iteration </label>
-                  <InputText name="maxIterLinear" fluid />
-                </div>
-                <div class="flex flex-col items-center gap-2">
-                  <label for="randomState" class="font-bold block mb-2"> random state </label>
-                  <InputNumber name="randomState" fluid />
-                </div>
+        <div v-show="$form.svmType?.value === 'Linear'">
+          <Fieldset legend="Loss">
+            <RadioButtonGroup
+              name="loss"
+              class="flex flex-wrap gap-4"
+            >
+              <div class="flex items-center gap-2">
+                <RadioButton
+                  input-id="epsilonInsensitive"
+                  value="epsilonInsensitive"
+                />
+                <label for="epsilonInsensitive">Epsilon Insensitive</label>
               </div>
-            </div>
-            <Button type="submit" severity="secondary" label="Submit" />
-        </Form>
-    </div>
+              <div class="flex items-center gap-2">
+                <RadioButton
+                  input-id="squaredEpsilonInsensitive"
+                  value="squaredEpsilonInsensitive"
+                />
+                <label for="squaredEpsilonInsensitive">Squared Epsilon Insensitive</label>
+              </div>
+            </RadioButtonGroup>
+          </Fieldset>
+          <Fieldset legend="Dual">
+            <RadioButtonGroup
+              name="dual"
+              class="flex flex-wrap gap-4"
+            >
+              <div class="flex items-center gap-2">
+                <RadioButton
+                  input-id="auto"
+                  value="auto"
+                />
+                <label for="auto">auto</label>
+              </div>
+              <div class="flex items-center gap-2">
+                <RadioButton
+                  input-id="true"
+                  value="true"
+                />
+                <label for="true">true</label>
+              </div>
+              <div class="flex items-center gap-2">
+                <RadioButton
+                  input-id="false"
+                  value="false"
+                />
+                <label for="false">false</label>
+              </div>
+            </RadioButtonGroup>
+          </Fieldset>
+          <div class="flex flex-col items-center gap-2">
+            <label
+              for="fitIntercept"
+              class="font-bold block mb-2"
+            > Fit Intercept </label>
+            <ToggleSwitch name="fitIntercept" />
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <label
+              for="interceptScaling"
+              class="font-bold block mb-2"
+            > Intercept Scaling </label>
+            <InputNumber
+              name="interceptScaling"
+              fluid
+            />
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <label
+              for="tolLinear"
+              class="font-bold block mb-2"
+            > tol </label>
+            <InputNumber
+              name="tolLinear"
+              fluid
+            />
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <label
+              for="maxIterLinear"
+              class="font-bold block mb-2"
+            > Max Iteration </label>
+            <InputText
+              name="maxIterLinear"
+              fluid
+            />
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <label
+              for="randomState"
+              class="font-bold block mb-2"
+            > random state </label>
+            <InputNumber
+              name="randomState"
+              fluid
+            />
+          </div>
+        </div>
+      </div>
+      <Button
+        type="submit"
+        severity="secondary"
+        label="Submit"
+      />
+    </Form>
+  </div>
 </template>
 

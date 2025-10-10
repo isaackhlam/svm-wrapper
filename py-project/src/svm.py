@@ -2,13 +2,13 @@ import ast
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Union, get_args, get_origin
 from pathlib import Path
+from typing import Optional, Union, get_args
 
 import typer
 from sklearn import svm
 
-from .utils import ExplainerType, explain_model, load_data
+from .utils import explain_model, load_data
 
 svm_app = typer.Typer()
 logger = logging.getLogger(__name__)
@@ -114,7 +114,7 @@ def build_config(
     # TODO: Bugfix: C take effect when Nu Vector is chosen.
     if C is not None:
         if svm_type == SVMType.Nu:
-            logger.warning(f"C specified but NuSVM is chosen. Ignoring C")
+            logger.warning("C specified but NuSVM is chosen. Ignoring C")
         elif C <= 0.0:
             logger.error(f"Value of C must be strictly positive. Input Value: {C}")
             raise ValueError("Non-positive C")
@@ -122,7 +122,7 @@ def build_config(
             config.C = C
     if nu is not None:
         if svm_type != SVMType.Nu:
-            logger.warning(f"nu specified but NuSVM is not chosen, Ignoring nu")
+            logger.warning("nu specified but NuSVM is not chosen, Ignoring nu")
         elif nu <= 0.0 or nu > 1.0:
             logger.error(f"Value of nu must be in (0, 1], Input Value: {nu}.")
             raise ValueError("Out of bound Nu")
@@ -156,10 +156,12 @@ def build_config(
         if degree is not None:
             if kernel != Kernel.poly:
                 logger.warning(
-                    f"degree parameter specified but kernel is not polynomial. Ingoring degree value specified."
+                    "degree parameter specified but kernel is not polynomial."
+                    "Ignoring degree value specified."
                 )
                 logger.warning(
-                    f"degree only significant for poly kernel type, current kernel type: {config.kernel}."
+                    "degree only significant for poly kernel type,"
+                    f"current kernel type: {config.kernel}."
                 )
             elif degree < 0:
                 logger.error(f"Degree must be non-negative, Input Value: {degree}")
@@ -171,7 +173,8 @@ def build_config(
                 pass
             elif not isinstance(gamma, float):
                 logger.error(
-                    f"Unknown gamma, must be 'scale', 'auto' or floating number. Input Value: {gamma}"
+                    "Unknown gamma, must be 'scale', 'auto' or floating number."
+                    f"Input Value: {gamma}"
                 )
                 raise ValueError("Unsupported gamma value")
             elif gamma < 0:
@@ -184,7 +187,8 @@ def build_config(
                     "coef0 specified but kernel is neither polynomial nor sigmoid."
                 )
                 logger.warning(
-                    "Ignoring coef0, it is only significant for polynomial or sigmoid kernel"
+                    "Ignoring coef0, it is only significant"
+                    "for polynomial or sigmoid kernel"
                 )
             else:
                 config.coef0 = coef0
@@ -251,7 +255,8 @@ def coerce_value(field_type, value):
                 continue
             try:
                 return coerce_value(arg, value)
-            except Exception:
+            except Exception as e:
+                logger.error(e)
                 continue
         raise typer.BadParameter(f"Could not parse value: {value}")
 
@@ -449,8 +454,8 @@ def classification_logic(
         )
 
 
-
-# typer.option default set to None, Actual default value already set when initialize Config object.
+# typer.option default set to None,
+# Actual default value already set when initialize Config object.
 @svm_app.command()
 def classification(
     svm_type: SVMType = "C",
@@ -465,12 +470,20 @@ def classification(
     do_explain_model: bool = False,
     C: Optional[float] = typer.Option(
         None,
-        help="Regularization parameter. The strength of the regularization is inversely proportional to C. Must be strictly positive. Default: 1.0",
+        help=(
+            "Regularization parameter. The strength of the regularization is"
+            "inversely proportional to C."
+            "Must be strictly positive. Default: 1.0"
+        ),
         show_default=False,
     ),
     nu: Optional[float] = typer.Option(
         None,
-        help="Upper bound on the fraction of margin errors and a lower bound of the fraction of support vectors. Must be in (0, 1]. Default: 0.5",
+        help=(
+            "Upper bound on the fraction of margin errors"
+            "and a lower bound of the fraction of support vectors."
+            "Must be in (0, 1]. Default: 0.5"
+        ),
         show_default=False,
     ),
     penalty: Optional[Penalty] = typer.Option(
@@ -485,12 +498,19 @@ def classification(
     ),
     dual: Optional[str] = typer.Option(
         None,
-        help="Select the algorithm to either solve the dual or primal optimization problem. Avaiable option: true, false, auto. Default: auto",
+        help=(
+            "Select the algorithm to either solve the dual"
+            "or primal optimization problem."
+            "Available option: true, false, auto. Default: auto"
+        ),
         show_default=False,
     ),
     multi_class: Optional[MultiClass] = typer.Option(
         None,
-        help="Determines the multi-class strategy if y contains ore than two classes. Default: 'ovr'",
+        help=(
+            "Determines the multi-class strategy if y contains ore than two classes."
+            "Default: 'ovr'"
+        ),
         show_default=False,
     ),
     fit_intercept: Optional[bool] = typer.Option(
@@ -500,7 +520,10 @@ def classification(
     ),
     intercept_scalling: Optional[float] = typer.Option(
         None,
-        help="Allow intercept term to have a different regularization behavior compared to the other features, Default: 1.0",
+        help=(
+            "Allow intercept term to have a different regularization behavior"
+            "compared to the other features, Default: 1.0"
+        ),
         show_default=False,
     ),
     kernel: Optional[Kernel] = typer.Option(
@@ -541,7 +564,10 @@ def classification(
     ),
     class_weight: Optional[str] = typer.Option(
         None,
-        help="Parameter of [C|Nu|Linear] of class i to class_weight[i] * [C|Nu|Linear]. Default: All weight are one",
+        help=(
+            "Parameter of [C|Nu|Linear] of class i to class_weight[i] * [C|Nu|Linear]."
+            "Default: All weight are one"
+        ),
         show_default=False,
     ),
     verbose: Optional[str] = typer.Option(
@@ -549,17 +575,26 @@ def classification(
     ),
     max_iter: Optional[int] = typer.Option(
         None,
-        help="Hard limit on iterations within solver, or -1 for no limit. Default: [C|Nu] -1, [Linear]: 1000",
+        help=(
+            "Hard limit on iterations within solver, or -1 for no limit."
+            "Default: [C|Nu] -1, [Linear]: 1000"
+        ),
         show_default=False,
     ),
     decision_function_shape: Optional[DecisionFunctionShape] = typer.Option(
         DecisionFunctionShape.ovr,
-        help="Whether to return a one-vs-rest (ovr) or one-vs-one (ovo) decision function. Default: ovr",
+        help=(
+            "Whether to return a one-vs-rest (ovr) or one-vs-one (ovo)"
+            "decision function. Default: ovr"
+        ),
         show_default=False,
     ),
     break_ties: Optional[bool] = typer.Option(
         None,
-        help="Whether predict will break ties according to the confidence values of decision_function. Default=False",
+        help=(
+            "Whether predict will break ties according to the"
+            "confidence values of decision_function. Default=False"
+        ),
         show_default=False,
     ),
     random_state: Optional[int] = typer.Option(
@@ -707,7 +742,6 @@ def regression_logic(
         logger.error(f"Unknown SVM Type, Supported types: {SVMType}")
         raise Exception("Unknown SVM Type")
 
-
     logger.info("Loading training data.")
     train_X, train_y = load_data(train_data_path, label_name)
     logger.info("Training model.")
@@ -746,7 +780,8 @@ def regression_logic(
         )
 
 
-# typer.option default set to None, Actual default value already set when initialize Config object.
+# typer.option default set to None,
+# Actual default value already set when initialize Config object.
 @svm_app.command()
 def regression(
     svm_type: SVMType = "C",
@@ -761,12 +796,19 @@ def regression(
     do_explain_model: bool = False,
     C: Optional[float] = typer.Option(
         None,
-        help="Regularization parameter. The strength of the regularization is inversely proportional to C. Must be strictly positive. Default: 1.0",
+        help=(
+            "Regularization parameter. The strength of the regularization is"
+            "proportional to C. Must be strictly positive. Default: 1.0"
+        ),
         show_default=False,
     ),
     nu: Optional[float] = typer.Option(
         None,
-        help="Upper bound on the fraction of margin errors and a lower bound of the fraction of support vectors. Must be in (0, 1]. Default: 0.5",
+        help=(
+            "Upper bound on the fraction of margin errors"
+            "and a lower bound of the fraction of support vectors."
+            "Must be in (0, 1]. Default: 0.5"
+        ),
         show_default=False,
     ),
     epsilon: Optional[float] = typer.Option(
@@ -781,7 +823,11 @@ def regression(
     ),
     dual: Optional[str] = typer.Option(
         None,
-        help="Select the algorithm to either solve the dual or primal optimization problem. Avaiable option: true, false, auto. Default: auto",
+        help=(
+            "Select the algorithm to either solve the dual"
+            "or primal optimization problem."
+            "Available option: true, false, auto. Default: auto"
+        ),
         show_default=False,
     ),
     fit_intercept: Optional[bool] = typer.Option(
@@ -791,7 +837,10 @@ def regression(
     ),
     intercept_scalling: Optional[float] = typer.Option(
         None,
-        help="Allow intercept term to have a different regularization behavior compared to the other features, Default: 1.0",
+        help=(
+            "Allow intercept term to have a different regularization behavior"
+            "compared to the other features, Default: 1.0"
+        ),
         show_default=False,
     ),
     kernel: Optional[Kernel] = typer.Option(
@@ -830,7 +879,10 @@ def regression(
     ),
     max_iter: Optional[int] = typer.Option(
         None,
-        help="Hard limit on iterations within solver, or -1 for no limit. Default: [C|Nu] -1, [Linear]: 1000",
+        help=(
+            "Hard limit on iterations within solver, or -1 for no limit."
+            "Default: [C|Nu] -1, [Linear]: 1000"
+        ),
         show_default=False,
     ),
 ):

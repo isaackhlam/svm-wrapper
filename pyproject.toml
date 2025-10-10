@@ -1,0 +1,27 @@
+[tool.black]
+line-length = 88
+target-version = ["py311"]  # adjust for your Python version
+skip-string-normalization = false
+extend-exclude = "node_modules"
+
+[tool.isort]
+profile = "black"
+line_length = 88
+skip = ["node_modules"]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = [
+    "E203",  # Whitespace before ':' (conflicts with black)
+    "W503",  # Line break before binary operator (black prefers this)
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".venv",
+    "venv",
+    "node_modules",
+]
+

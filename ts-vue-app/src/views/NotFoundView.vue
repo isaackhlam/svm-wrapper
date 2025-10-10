@@ -2,7 +2,9 @@
   <div class="flex items-center justify-center min-h-screen bg-surface-100">
     <Card class="w-full max-w-md shadow-2xl rounded-2xl text-center p-6">
       <template #title>
-        <h1 class="text-4xl font-bold text-red-500">404</h1>
+        <h1 class="text-4xl font-bold text-red-500">
+          404
+        </h1>
       </template>
 
       <template #subtitle>
@@ -20,9 +22,17 @@
 
       <template #footer>
         <div class="flex justify-center gap-4">
-          <Button label="Previous Page" icon="pi pi-arrow-left" severity="secondary" @click="goBack" />
+          <Button
+            label="Previous Page"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            @click="goBack"
+          />
           <RouterLink to="/">
-            <Button label="Home Page" icon="pi pi-home" />
+            <Button
+              label="Home Page"
+              icon="pi pi-home"
+            />
           </RouterLink>
         </div>
       </template>
