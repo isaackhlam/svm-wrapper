@@ -255,7 +255,8 @@ def coerce_value(field_type, value):
                 continue
             try:
                 return coerce_value(arg, value)
-            except Exception:
+            except Exception as e:
+                logger.error(e)
                 continue
         raise typer.BadParameter(f"Could not parse value: {value}")
 

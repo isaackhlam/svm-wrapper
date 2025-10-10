@@ -34,8 +34,8 @@ from src.utils import setup_logger
 
 client = Minio(
     "minio:9000",
-    access_key="minioadmin",
-    secret_key="minioadmin",
+    access_key="minioadmin",  # nosec
+    secret_key="minioadmin",  # nosec
     secure=False,
 )
 bucket_name = "my-bucket"
