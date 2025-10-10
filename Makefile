@@ -16,7 +16,7 @@ format/quick:
 
 lint:
 	for i in $$(ls -d py-*/); do flake8 $$i; bandit -r $$i; done
-	for i in $$(ls -d ts-*/); do pnpm eslint $$i; pnpm depcheck $$i; done
+	for i in $$(ls -d ts-*/); do pnpm eslint $$i; echo $$i; pnpm depcheck $$i; done
 
 format:
 	for i in $$(ls -d py-*/); do python -m black $$i; isort $$i; done
